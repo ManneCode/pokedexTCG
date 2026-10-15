@@ -5,7 +5,7 @@ La página se publica en **Vercel** y guarda las cuentas y colecciones en **Supa
 ## 1. Supabase (base de datos y login)
 
 1. Crea una cuenta en https://supabase.com y un proyecto nuevo (región: la más cercana, p. ej. `East US`). Guarda la contraseña de la base de datos en un lugar seguro.
-2. Ve a **SQL Editor → New query**, pega el contenido de [`supabase/schema.sql`](supabase/schema.sql) y dale **Run**. Repite con [`supabase/002_feedback.sql`](supabase/002_feedback.sql) (el buzón de sugerencias).
+2. Ve a **SQL Editor → New query**, pega el contenido de [`supabase/schema.sql`](supabase/schema.sql) y dale **Run**. Repite con [`supabase/002_feedback.sql`](supabase/002_feedback.sql) (el buzón de sugerencias) y [`supabase/003_explore.sql`](supabase/003_explore.sql) (el ranking de Explorar).
 3. Ve a **Project Settings → API** y copia:
    - **Project URL** → `VITE_SUPABASE_URL`
    - **anon public key** → `VITE_SUPABASE_ANON_KEY`

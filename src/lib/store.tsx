@@ -1,7 +1,11 @@
 // Estado de la colección: cartas que tienes, carta destacada por casilla y casillas
 // marcadas como "lo tengo" sin carta elegida todavía.
 // Una casilla es una especie ("25") o una forma regional ("52-alola").
-import { createContext, useContext, useEffect, useReducer, useRef, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useReducer, useRef, type ReactNode } from 'react'
+
+export type Condition = 'NM' | 'LP' | 'MP' | 'HP' | 'DMG'
+export type GradingCompany = 'PSA' | 'BGS' | 'CGC' | 'TAG'
+export type Grade = { company: GradingCompany; score: number }
 
 export type OwnedCard = {
   uid: string
@@ -11,7 +15,27 @@ export type OwnedCard = {
   variant: string
   qty: number
   addedAt: string
+  /** Sin valor = Near Mint */
+  condition?: Condition
+  grade?: Grade
+  /** Valor por copia que pone el usuario, en USD (útil para cartas gradeadas). */
+  customPrice?: number
 }
+
+/** Campos de una carta que se pueden cambiar después de agregarla. */
+export type OwnedPatch = Partial<Pick<OwnedCard, 'variant' | 'qty' | 'condition' | 'grade' | 'customPrice'>>
+
+/** Carta que el usuario quiere conseguir. */
+export type WishCard = {
+  uid: string
+  cardId: string
+  slots: string[]
+  variant: string
+  addedAt: string
+}
+
+/** Foto diaria del valor de la colección (fecha local AAAA-MM-DD). */
+export type ValuePoint = { date: string; usd: number; cards: number; withCard: number }
 
 export type CollectionState = {
   version: 1
@@ -20,11 +44,16 @@ export type CollectionState = {
   featured: Record<string, string>
   /** Casillas que tienes pero sin carta elegida todavía */
   marked: string[]
+  wishlist: WishCard[]
+  history: ValuePoint[]
 }
 
 type Action =
   | { type: 'add'; cardId: string; slots: string[]; variant: string }
-  | { type: 'update'; uid: string; patch: Partial<Pick<OwnedCard, 'variant' | 'qty'>> }
+  | { type: 'update'; uid: string; patch: OwnedPatch }
+  | { type: 'wishToggle'; cardId: string; slots: string[]; variant: string }
+  | { type: 'wishRemove'; uid: string }
+  | { type: 'recordValue'; point: ValuePoint }
   | { type: 'remove'; uid: string }
   | { type: 'feature'; slot: string; uid: string }
   | { type: 'toggleMark'; slot: string }
@@ -32,7 +61,10 @@ type Action =
   | { type: 'replace'; state: CollectionState }
 
 const STORAGE_KEY = 'pkt-collection-v1'
-const EMPTY: CollectionState = { version: 1, owned: [], featured: {}, marked: [] }
+const EMPTY: CollectionState = { version: 1, owned: [], featured: {}, marked: [], wishlist: [], history: [] }
+
+/** Unos dos años de fotos diarias. */
+const MAX_HISTORY = 730
 
 type StoredState = Partial<Omit<CollectionState, 'owned' | 'marked'>> & {
   owned?: (Omit<OwnedCard, 'slots'> & { slots?: string[]; dexIds?: number[] })[]
@@ -46,6 +78,8 @@ function migrate(data: StoredState): CollectionState {
     ...data,
     owned: (data.owned ?? []).map(({ dexIds, ...o }) => ({ ...o, slots: o.slots ?? (dexIds ?? []).map(String) })),
     marked: (data.marked ?? []).map(String),
+    wishlist: data.wishlist ?? [],
+    history: data.history ?? [],
   }
 }
 
@@ -80,7 +114,27 @@ function reducer(state: CollectionState, action: Action): CollectionState {
         owned: [...state.owned, card],
         featured,
         marked: state.marked.filter((s) => !action.slots.includes(s)),
+        // ¡La conseguiste! Sale de la lista de deseos.
+        wishlist: state.wishlist.filter((w) => w.cardId !== action.cardId),
       }
+    }
+    case 'wishToggle': {
+      const existing = state.wishlist.find((w) => w.cardId === action.cardId)
+      if (existing) return { ...state, wishlist: state.wishlist.filter((w) => w !== existing) }
+      const wish: WishCard = {
+        uid: uid(),
+        cardId: action.cardId,
+        slots: action.slots,
+        variant: action.variant,
+        addedAt: new Date().toISOString(),
+      }
+      return { ...state, wishlist: [...state.wishlist, wish] }
+    }
+    case 'wishRemove':
+      return { ...state, wishlist: state.wishlist.filter((w) => w.uid !== action.uid) }
+    case 'recordValue': {
+      const rest = state.history.filter((h) => h.date !== action.point.date)
+      return { ...state, history: [...rest, action.point].slice(-MAX_HISTORY) }
     }
     case 'update':
       return {
@@ -143,9 +197,12 @@ type ProviderProps = {
 
 export function CollectionProvider({ children, initial, readOnly = false, onChange }: ProviderProps) {
   const [state, rawDispatch] = useReducer(reducer, initial, (i) => (i ? migrate(i) : load()))
-  const dispatch = (a: Action) => {
-    if (!readOnly) rawDispatch(a)
-  }
+  const dispatch = useCallback(
+    (a: Action) => {
+      if (!readOnly) rawDispatch(a)
+    },
+    [readOnly],
+  )
   const first = useRef(true)
   useEffect(() => {
     // El estado inicial ya está guardado; solo persistimos cambios.

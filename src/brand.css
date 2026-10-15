@@ -601,3 +601,576 @@ button.link.center {
   letter-spacing: 0.06em;
   padding-inline: 0.65rem;
 }
+
+/* ---------- moneda ---------- */
+
+.label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.currency-toggle {
+  display: inline-flex;
+  padding: 2px;
+  border-radius: 7px;
+  border: 1px solid var(--line);
+  background: var(--sleeve);
+}
+
+.currency-toggle button {
+  background: transparent;
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 500;
+  padding: 0.15rem 0.45rem;
+  border-radius: 5px;
+}
+
+.currency-toggle button.on {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+/* ---------- colección: pestañas, condición, deseos ---------- */
+
+.col-tabs {
+  margin-bottom: 1rem;
+}
+
+.col-tabs .count {
+  margin-left: 0.4rem;
+  padding: 0 0.4rem;
+  border-radius: 99px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+}
+
+.push-right {
+  margin-left: auto;
+}
+
+.hint.block {
+  display: block;
+}
+
+.badges {
+  display: flex;
+  gap: 0.3rem;
+}
+
+.badge {
+  display: inline-block;
+  margin-left: 0.35rem;
+  padding: 0.05rem 0.4rem;
+  border-radius: 5px;
+  border: 1px solid var(--line);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+
+.badges .badge {
+  margin-left: 0;
+}
+
+.badge.graded {
+  border-color: var(--accent);
+  color: var(--ink);
+}
+
+.card-details {
+  margin-top: 0.3rem;
+  font-size: 0.85rem;
+}
+
+.card-details summary {
+  cursor: pointer;
+  color: var(--muted);
+}
+
+.details-grid {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.4rem 0.7rem;
+  align-items: center;
+  margin-top: 0.5rem;
+}
+
+.details-grid select,
+.details-grid input {
+  min-width: 0;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  padding: 0.3rem 0.5rem;
+}
+
+.grade-row,
+.price-row {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+.grade-row input {
+  width: 4.5rem;
+}
+
+.price-row input {
+  width: 7rem;
+}
+
+.details-note {
+  margin: 0.4rem 0 0;
+  font-size: 0.78rem;
+}
+
+.card-actions {
+  display: inline-flex;
+  gap: 0.3rem;
+  align-items: center;
+}
+
+.wish-btn {
+  background: transparent;
+  border: 1px solid var(--line);
+  color: var(--muted);
+  padding: 0.2rem 0.5rem;
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.wish-btn.on,
+.wish-tag {
+  color: var(--danger);
+  border-color: var(--danger);
+}
+
+.wish-tag {
+  font-size: 1rem;
+}
+
+.wish-total,
+.history-head > div:first-child {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  margin-bottom: 1rem;
+}
+
+.wish-total .label,
+.history-head .label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+.money.big {
+  font-size: 1.8rem;
+}
+
+.row-actions {
+  white-space: nowrap;
+  display: flex;
+  gap: 0.3rem;
+}
+
+/* ---------- historial de valor ---------- */
+
+.history-head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.8rem;
+}
+
+.delta {
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  color: var(--ink);
+}
+
+.delta.up::first-letter {
+  color: var(--have);
+}
+
+.delta.down::first-letter {
+  color: var(--danger);
+}
+
+.chart-box {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding-block: 0.5rem;
+}
+
+.chart {
+  display: block;
+  max-width: 100%;
+}
+
+.chart .grid {
+  stroke: var(--line);
+  stroke-width: 1;
+}
+
+.chart .axis {
+  fill: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+.chart .line {
+  fill: none;
+  stroke: var(--chart);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.chart .area {
+  fill: var(--chart);
+  opacity: 0.1;
+}
+
+.chart .dot {
+  fill: var(--chart);
+  stroke: var(--surface);
+  stroke-width: 2;
+}
+
+.chart .crosshair {
+  stroke: var(--muted);
+  stroke-width: 1;
+}
+
+.chart-tip {
+  position: absolute;
+  transform: translate(-50%, -100%);
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  padding: 0.45rem 0.6rem;
+  border-radius: 8px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+.chart-tip strong {
+  font-family: var(--font-mono);
+}
+
+.history > .hint {
+  margin: 0.6rem 0 0.2rem;
+}
+
+/* ---------- binder ---------- */
+
+.binder-nav {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 0.5rem 0 1rem;
+  flex-wrap: wrap;
+}
+
+.binder-spread {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 360px), 1fr));
+  gap: 0;
+  max-width: 1100px;
+  margin-inline: auto;
+  border-radius: 18px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  /* Vinil del binder: un tono más oscuro que la página. */
+  background:
+    linear-gradient(
+      90deg,
+      transparent calc(50% - 1px),
+      var(--line) calc(50% - 1px),
+      var(--line) calc(50% + 1px),
+      transparent calc(50% + 1px)
+    ),
+    color-mix(in srgb, var(--ink) 8%, var(--bg));
+  box-shadow: var(--shadow);
+}
+
+.binder-page {
+  padding: 1rem clamp(0.7rem, 2vw, 1.4rem) 1.3rem;
+}
+
+.binder-page header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.7rem;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.page-count.done {
+  color: var(--have);
+  font-weight: 700;
+}
+
+.pockets {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: clamp(6px, 1.2vw, 12px);
+}
+
+.pocket {
+  position: relative;
+  width: 100%;
+  aspect-ratio: var(--card-ratio);
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 2px;
+  border-radius: 6px;
+  overflow: hidden;
+  font-weight: 400;
+  color: var(--ink);
+  /* Bolsa vacía: plástico con un brillo diagonal. */
+  background: linear-gradient(135deg, rgb(255 255 255 / 0.07), transparent 40%), var(--sleeve);
+  border: 1px solid var(--line);
+  transition: transform 0.12s ease;
+}
+
+.pocket:hover {
+  transform: translateY(-2px);
+}
+
+.pocket.filled {
+  border-color: transparent;
+  box-shadow: 0 3px 10px rgb(0 0 0 / 0.3);
+}
+
+.pocket.filled img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.pocket.marked {
+  border: 1px dashed var(--pending);
+}
+
+.pocket-sprite {
+  position: absolute;
+  inset: 12% 10% 34%;
+  width: 80%;
+  height: 54%;
+  object-fit: contain;
+  image-rendering: pixelated;
+  filter: grayscale(1) opacity(0.3);
+}
+
+.pocket .slot-no,
+.pocket-name {
+  position: relative;
+}
+
+.pocket-name {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0 4px 6px;
+  text-align: center;
+  line-height: 1.1;
+  overflow-wrap: anywhere;
+}
+
+.pockets-12 .pocket-name,
+.pockets-12 .slot-no {
+  font-size: 0.62rem;
+}
+
+/* ---------- explorar ---------- */
+
+.explore-link {
+  color: var(--ink);
+}
+
+.explore-hero {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding-block: 1rem 0.5rem;
+}
+
+.explore-hero h2 {
+  font-size: clamp(1.6rem, 3.6vw, 2.3rem);
+  font-weight: 800;
+}
+
+.explore-hero p {
+  margin: 0;
+}
+
+.leaderboard {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.collector {
+  display: grid;
+  grid-template-columns: 2.5rem minmax(0, 1.4fr) minmax(0, 1.6fr) 6rem 8.5rem;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 0.7rem 1rem;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: inherit;
+  text-decoration: none;
+  transition:
+    transform 0.12s ease,
+    border-color 0.12s ease;
+}
+
+.collector:hover {
+  transform: translateY(-1px);
+  border-color: var(--accent);
+}
+
+.collector.top {
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--accent) 14%, transparent), transparent 60%), var(--surface);
+}
+
+.collector .rank {
+  font-family: var(--font-mono);
+  font-size: 1.1rem;
+  text-align: center;
+}
+
+.collector .who,
+.collector .progress {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.collector .who strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (max-width: 720px) {
+  .collector {
+    grid-template-columns: 2rem minmax(0, 1fr) auto;
+  }
+  .collector .progress {
+    grid-column: 2 / -1;
+  }
+  .collector .num:not(.money) {
+    display: none;
+  }
+}
+
+/* ---------- escanear ---------- */
+
+.scan-btn {
+  background: var(--ink);
+  color: var(--bg);
+}
+
+.scan-drop {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 2rem 1rem;
+  border: 2px dashed var(--line);
+  border-radius: 14px;
+  text-align: center;
+  cursor: pointer;
+  color: var(--ink);
+  transition: border-color 0.15s ease;
+}
+
+.scan-drop:hover,
+#scan-file:focus-visible + .scan-drop {
+  border-color: var(--accent);
+}
+
+.scan-body {
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.scan-preview {
+  width: 120px;
+  aspect-ratio: var(--card-ratio);
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+}
+
+.scan-side p {
+  margin: 0;
+}
+
+.scan-results {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-height: 46vh;
+  overflow-y: auto;
+}
+
+.scan-results li {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr) auto;
+  gap: 0.7rem;
+  align-items: center;
+  padding: 0.4rem;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+}
+
+.scan-results img,
+.scan-results .noimg {
+  width: 56px;
+  border-radius: 4px;
+}
+
+.scan-actions {
+  display: flex;
+  gap: 0.3rem;
+  align-items: center;
+}

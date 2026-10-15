@@ -3,18 +3,21 @@ import { isEmptyCollection, useCollection, type CollectionState } from './lib/st
 import { useCards } from './lib/cards'
 import { useAuth } from './lib/auth'
 import type { Profile } from './lib/supabase'
-import { fmtUsd, priceOf } from './lib/tcgdex'
+import { collectionTotals, todayKey } from './lib/value'
+import { fmtMoney } from './lib/money'
 import { TOTAL_SLOTS, isExtra, slotByKey } from './lib/pokedex'
 import { useI18n, type MessageKey } from './i18n'
 import DexView from './components/DexView'
 import CollectionView from './components/CollectionView'
+import BinderView from './components/BinderView'
 import PokemonPanel from './components/PokemonPanel'
 import LoginDialog from './components/LoginDialog'
 import CardFan from './components/CardFan'
 import Dialog from './components/Dialog'
 import Footer from './components/Footer'
+import ScanDialog from './components/ScanDialog'
 
-type Tab = 'dex' | 'collection'
+type Tab = 'dex' | 'binder' | 'collection'
 
 export type SaveStatus = 'saved' | 'pending' | 'saving' | 'error'
 
@@ -41,12 +44,12 @@ export default function App({ mode }: { mode: AppMode }) {
   const { state, dispatch, readOnly } = useCollection()
   const { cards, ensure } = useCards()
   const { auth, signOut } = useAuth()
-  const { t, lang, setLang, locale } = useI18n()
+  const { t, lang, setLang, locale, currency, setCurrency, rate } = useI18n()
   const [tab, setTab] = useState<Tab>('dex')
   const [openSlot, setOpenSlot] = useState<string | null>(null)
   const [refreshing, setRefreshing] = useState(false)
   const [notice, setNotice] = useState<string | null>(null)
-  const [dialog, setDialog] = useState<'login' | 'signup' | 'share' | null>(null)
+  const [dialog, setDialog] = useState<'login' | 'signup' | 'share' | 'scan' | null>(null)
   const fileInput = useRef<HTMLInputElement>(null)
 
   const ownedIds = useMemo(() => [...new Set(state.owned.map((o) => o.cardId))], [state.owned])
@@ -63,26 +66,39 @@ export default function App({ mode }: { mode: AppMode }) {
       return !!slot && !isExtra(slot)
     }
     const withCard = new Set(state.owned.flatMap((o) => o.slots).filter(isMain))
-    let value = 0
-    let approx = false
-    let unpriced = 0
-    for (const o of state.owned) {
-      const p = priceOf(cards[o.cardId], o.variant)
-      if (!p) unpriced += o.qty
-      else {
-        value += p.usd * o.qty
-        approx ||= p.approx
-      }
-    }
+    const totals = collectionTotals(state, cards)
     return {
       withCard: withCard.size,
       marked: state.marked.filter((k) => isMain(k) && !withCard.has(k)).length,
-      totalCards: state.owned.reduce((n, o) => n + o.qty, 0),
-      value,
-      approx,
-      unpriced,
+      totalCards: totals.cards,
+      value: totals.usd,
+      approx: totals.approx,
+      unpriced: totals.unpriced,
+      // Solo guardamos la foto del día cuando ya llegaron los precios de todas las cartas.
+      complete: ownedIds.every((id) => cards[id]),
     }
-  }, [state, cards])
+  }, [state, cards, ownedIds])
+
+  // Foto diaria del valor para la gráfica de historial (solo en tu propia colección).
+  const lastPoint = state.history[state.history.length - 1]
+  useEffect(() => {
+    if (readOnly || !stats.complete || !state.owned.length) return
+    const point = {
+      date: todayKey(),
+      usd: Math.round(stats.value * 100) / 100,
+      cards: stats.totalCards,
+      withCard: stats.withCard,
+    }
+    if (
+      lastPoint &&
+      lastPoint.date === point.date &&
+      lastPoint.usd === point.usd &&
+      lastPoint.cards === point.cards &&
+      lastPoint.withCard === point.withCard
+    )
+      return
+    dispatch({ type: 'recordValue', point })
+  }, [readOnly, stats, state.owned.length, lastPoint, dispatch])
 
   async function refreshPrices() {
     setRefreshing(true)
@@ -131,11 +147,24 @@ export default function App({ mode }: { mode: AppMode }) {
           <button className={tab === 'dex' ? 'on' : ''} onClick={() => setTab('dex')}>
             {t('nav.dex')}
           </button>
+          <button className={tab === 'binder' ? 'on' : ''} onClick={() => setTab('binder')}>
+            {t('nav.binder')}
+          </button>
           <button className={tab === 'collection' ? 'on' : ''} onClick={() => setTab('collection')}>
             {readOnly ? t('nav.collection') : t('nav.myCollection')}
           </button>
         </nav>
         <div className="topbar-actions">
+          {!readOnly && (
+            <button className="scan-btn" onClick={() => setDialog('scan')}>
+              {t('scan.button')}
+            </button>
+          )}
+          {canLogin && (
+            <a className="ghost-button explore-link" href="/explorar">
+              {t('explore.link')}
+            </a>
+          )}
           <button
             className="ghost lang-toggle"
             onClick={() => setLang(lang === 'es' ? 'en' : 'es')}
@@ -227,13 +256,24 @@ export default function App({ mode }: { mode: AppMode }) {
           <span className="hint">{t('stats.distinct', { n: ownedIds.length })}</span>
         </div>
         <div className="stat">
-          <span className="label">{t('stats.value')}</span>
+          <span className="label-row">
+            <span className="label">{t('stats.value')}</span>
+            <span className="currency-toggle" role="group" aria-label={t('stats.currency')}>
+              {(['USD', 'MXN'] as const).map((c) => (
+                <button key={c} className={currency === c ? 'on' : ''} onClick={() => setCurrency(c)}>
+                  {c}
+                </button>
+              ))}
+            </span>
+          </span>
           <span className="value money">
             {stats.approx && '≈ '}
-            {fmtUsd(stats.value)}
+            {fmtMoney(stats.value)}
           </span>
           <span className="hint">
-            {t('stats.valueSource')}
+            {currency === 'MXN' && rate
+              ? t('stats.valueSourceMxn', { rate: rate.mxn.toFixed(2), date: rate.date })
+              : t('stats.valueSource')}
             {stats.unpriced > 0 && ` · ${t('stats.unpriced', { n: stats.unpriced })}`}
           </span>
         </div>
@@ -294,7 +334,11 @@ export default function App({ mode }: { mode: AppMode }) {
         </div>
       )}
 
-      <main>{tab === 'dex' ? <DexView onOpen={setOpenSlot} /> : <CollectionView onOpen={setOpenSlot} />}</main>
+      <main>
+        {tab === 'dex' && <DexView onOpen={setOpenSlot} />}
+        {tab === 'binder' && <BinderView onOpen={setOpenSlot} />}
+        {tab === 'collection' && <CollectionView onOpen={setOpenSlot} />}
+      </main>
       <Footer />
 
       {openSlot !== null && (
@@ -304,6 +348,7 @@ export default function App({ mode }: { mode: AppMode }) {
       {(dialog === 'login' || dialog === 'signup') && (
         <LoginDialog initialView={dialog === 'signup' ? 'sign-up' : 'sign-in'} onClose={() => setDialog(null)} />
       )}
+      {dialog === 'scan' && <ScanDialog onClose={() => setDialog(null)} onOpen={setOpenSlot} />}
       {dialog === 'share' && mode.kind === 'cloud' && (
         <Dialog title={t('share.title')} onClose={() => setDialog(null)}>
           <div className="share-row">

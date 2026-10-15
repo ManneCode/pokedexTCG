@@ -21,6 +21,17 @@ Con Supabase cada quien crea su cuenta con correo y contraseña, su colección s
 
 Para regenerar la lista de especies y formas: `node scripts/build-pokedex.mjs`.
 
+## Funciones
+
+- **Pokédex** por generación, formas regionales y extras (Megas, Rotom, Wormadam).
+- **Binder**: páginas de 4, 9 o 12 bolsas en orden de Pokédex, para planear tu binder físico.
+- **Mi colección**: tabla con valor por carta, condición (NM a DMG), gradeo (PSA, BGS, CGC, TAG) y precio manual. Se exporta a CSV para Excel.
+- **Lista de deseos** (♡ en cualquier carta) con lo que costaría completarla.
+- **Historial de valor**: una foto diaria del valor de la colección, con gráfica.
+- **Precios en USD o MXN** (tipo de cambio del día de Frankfurter / BCE).
+- **Escanear** una carta con la cámara: OCR en el navegador con Tesseract.js lee el nombre y el número (025/198) y busca la carta.
+- **Explorar** (`/explorar`): colecciones públicas con ranking por % completado, valor o número de cartas.
+
 ## Idiomas
 
 La interfaz está en español e inglés (botón ES/EN arriba). Los textos están en `src/i18n/messages.ts`. Los nombres de Pokémon y formas cambian con el idioma, y los nombres de las cartas siempre vienen en inglés desde TCGdex.

@@ -13,6 +13,7 @@
   --pending: #c26a12;
   --pending-soft: #fbead6;
   --danger: #b5372c;
+  --chart: #23855a;
   --shadow: 0 1px 2px rgb(24 33 43 / 0.08), 0 6px 18px rgb(24 33 43 / 0.06);
 
   --font-display: 'Bricolage Grotesque', 'Segoe UI', system-ui, sans-serif;
@@ -37,6 +38,7 @@
     --pending: #f0a45a;
     --pending-soft: #3a2611;
     --danger: #ef7468;
+    --chart: #36a873;
     --shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 8px 24px rgb(0 0 0 / 0.25);
     color-scheme: dark;
   }
@@ -892,9 +894,9 @@ a {
   flex-wrap: wrap;
 }
 
+/* Solo en filas: en columnas (.stack) este flex-basis volvería el campo de 200px de alto. */
 .inline-form input,
-.share-row input,
-.stack input[type='email'] {
+.share-row input {
   flex: 1 1 200px;
   min-width: 0;
   background: var(--surface);
@@ -1044,6 +1046,8 @@ a {
 }
 
 .dialog {
+  /* Los diálogos que abre el footer no deben heredar su texto centrado. */
+  text-align: left;
   width: min(460px, 100%);
   max-height: 90vh;
   overflow-y: auto;

@@ -51,11 +51,66 @@ export async function loadCollection(userId: string): Promise<CloudCollection | 
   return data && { state: data.data, isPublic: data.is_public, updatedAt: data.updated_at }
 }
 
-export async function saveCollection(userId: string, state: CollectionState) {
-  const { error } = await client()
-    .from('collections')
-    .upsert({ user_id: userId, data: state, updated_at: new Date().toISOString() })
+export type CollectionSummary = { with_card: number; total_cards: number; value_usd: number }
+
+/** false si la base todavía no tiene las columnas de 003_explore.sql: guardamos sin resumen. */
+let summaryColumns = true
+
+export async function saveCollection(userId: string, state: CollectionState, summary?: CollectionSummary) {
+  const row = { user_id: userId, data: state, updated_at: new Date().toISOString() }
+  if (summary && summaryColumns) {
+    const { error } = await client()
+      .from('collections')
+      .upsert({ ...row, ...summary })
+    if (!error) return
+    // PGRST204: columna desconocida (falta correr 003_explore.sql).
+    if (error.code !== 'PGRST204') throw error
+    summaryColumns = false
+  }
+  const { error } = await client().from('collections').upsert(row)
   if (error) throw error
+}
+
+export type CollectorRow = {
+  username: string
+  withCard: number
+  totalCards: number
+  valueUsd: number
+  updatedAt: string
+}
+
+export type CollectorSort = 'with_card' | 'value_usd' | 'total_cards' | 'updated_at'
+
+/** Colecciones públicas para Explorar, ordenadas por el criterio elegido. */
+export async function listCollectors(sort: CollectorSort, search = '', limit = 60): Promise<CollectorRow[]> {
+  let query = client()
+    .from('collections')
+    .select('with_card, total_cards, value_usd, updated_at, profiles!inner(username)')
+    .eq('is_public', true)
+    .gt('total_cards', 0)
+    .order(sort, { ascending: false })
+    .limit(limit)
+  const q = search
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9_]/g, '')
+  if (q) query = query.ilike('profiles.username', `%${q}%`)
+  const { data, error } = await query
+  if (error) throw error
+  type Row = {
+    with_card: number
+    total_cards: number
+    value_usd: number
+    updated_at: string
+    profiles: { username: string } | { username: string }[]
+  }
+  return ((data ?? []) as Row[]).map((r) => ({
+    username: Array.isArray(r.profiles) ? r.profiles[0]?.username : r.profiles.username,
+    withCard: r.with_card,
+    totalCards: r.total_cards,
+    valueUsd: Number(r.value_usd),
+    updatedAt: r.updated_at,
+  }))
 }
 
 export async function setCollectionPublic(userId: string, isPublic: boolean) {

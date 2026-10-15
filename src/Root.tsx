@@ -12,16 +12,21 @@ import {
   type PublicCollection,
 } from './lib/supabase'
 import App, { type SaveStatus } from './App'
+import { useCards } from './lib/cards'
+import { collectionSummary } from './lib/value'
+import ExplorePage from './components/ExplorePage'
 import { useI18n } from './i18n'
 import NewPasswordDialog from './components/NewPasswordDialog'
 import Footer from './components/Footer'
 
 export default function Root() {
   const { recovering } = useAuth()
-  const match = window.location.pathname.match(/^\/u\/([^/]+)\/?$/)
+  const path = window.location.pathname
+  const match = path.match(/^\/u\/([^/]+)\/?$/)
+  const explore = /^\/(explorar|explore)\/?$/.test(path)
   return (
     <>
-      {match ? <PublicPage username={decodeURIComponent(match[1])} /> : <HomePage />}
+      {explore ? <ExplorePage /> : match ? <PublicPage username={decodeURIComponent(match[1])} /> : <HomePage />}
       {recovering && <NewPasswordDialog />}
     </>
   )
@@ -50,6 +55,9 @@ function HomePage() {
 
 /** Tu colección en la nube; la primera vez sube lo que tenías en este navegador. */
 function CloudDex({ profile }: { profile: Profile }) {
+  const { cards } = useCards()
+  const cardsRef = useRef(cards)
+  cardsRef.current = cards
   const [initial, setInitial] = useState<CollectionState | null>(null)
   const [isPublic, setIsPublic] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -79,7 +87,7 @@ function CloudDex({ profile }: { profile: Profile }) {
     pending.current = null
     setSaveStatus('saving')
     try {
-      await saveCollection(profile.id, state)
+      await saveCollection(profile.id, state, collectionSummary(state, cardsRef.current))
       setSaveStatus(pending.current ? 'pending' : 'saved')
     } catch {
       pending.current ??= state

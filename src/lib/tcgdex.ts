@@ -8,7 +8,7 @@ export const EUR_TO_USD = 1.15
 const EXCLUDED_SERIES = new Set(['tcgp'])
 
 const PRICE_TTL_MS = 24 * 60 * 60 * 1000
-const CACHE_KEY = 'pkt-cards-v1'
+const CACHE_KEY = 'pkt-cards-v2'
 const LIST_KEY = 'pkt-lists-v1'
 
 export type CardBrief = { id: string; localId: string; name: string; image?: string }
@@ -21,6 +21,8 @@ export type CardInfo = {
   rarity?: string
   setId: string
   setName: string
+  /** Cartas oficiales del set (el "198" de "025/198") */
+  setTotal?: number
   series?: string
   dexIds: number[]
   /** Variantes con precio de TCGplayer (USD, market price). */
@@ -100,7 +102,7 @@ type RawCard = {
   image?: string
   rarity?: string
   dexId?: number[]
-  set: { id: string; name: string }
+  set: { id: string; name: string; cardCount?: { official?: number } }
   variants?: Record<string, boolean>
   pricing?: {
     tcgplayer?: Record<string, { marketPrice?: number | null; midPrice?: number | null } | string>
@@ -133,6 +135,7 @@ function toCardInfo(raw: RawCard): CardInfo {
     rarity: raw.rarity,
     setId: raw.set.id,
     setName: raw.set.name,
+    setTotal: raw.set.cardCount?.official,
     series: seriesOf(raw.image),
     dexIds: raw.dexId ?? [],
     usd,
@@ -206,13 +209,3 @@ export function defaultVariant(card: CardInfo): string {
   if (card.variants.includes('normal')) return 'normal'
   return card.variants[0]
 }
-
-let numberLocale = 'es-MX'
-
-/** Lo fija el proveedor de idioma (src/i18n) para que los precios sigan el idioma elegido. */
-export const setNumberLocale = (locale: string) => {
-  numberLocale = locale
-}
-
-export const fmtUsd = (n: number) =>
-  n.toLocaleString(numberLocale, { style: 'currency', currency: 'USD', minimumFractionDigits: 2 })

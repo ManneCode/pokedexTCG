@@ -4,7 +4,6 @@ import { useCards } from '../lib/cards'
 import {
   cardImage,
   defaultVariant,
-  fmtUsd,
   getSeriesOrder,
   listCardsForDex,
   priceOf,
@@ -12,6 +11,9 @@ import {
   type CardBrief,
   type CardInfo,
 } from '../lib/tcgdex'
+import { fmtMoney } from '../lib/money'
+import { ownedValue } from '../lib/value'
+import CardDetails from './CardDetails'
 import { SLOTS, dexNo, slotByKey, slotCandidates, spriteUrl } from '../lib/pokedex'
 import { useI18n } from '../i18n'
 
@@ -99,17 +101,20 @@ export default function PokemonPanel({ slotKey, onClose, onNavigate }: Props) {
 
   const loaded = list ? list.filter((c) => cards[c.id]).length : 0
 
-  function add(card: CardBrief) {
+  /** Casillas y variante con las que se guarda una carta de esta lista. */
+  function placement(card: CardBrief) {
     const info = cards[card.id]
-    dispatch({
-      type: 'add',
+    return {
       cardId: card.id,
       slots: (info?.dexIds.length ? info.dexIds : [dex]).map((d) =>
         d === dex ? slotKey : slotCandidates(d, card.name)[0],
       ),
       variant: info ? defaultVariant(info) : 'normal',
-    })
+    }
   }
+
+  const add = (card: CardBrief) => dispatch({ type: 'add', ...placement(card) })
+  const toggleWish = (card: CardBrief) => dispatch({ type: 'wishToggle', ...placement(card) })
 
   return (
     <div className="panel-backdrop" onClick={onClose}>
@@ -167,7 +172,7 @@ export default function PokemonPanel({ slotKey, onClose, onNavigate }: Props) {
             <ul className="mine-list">
               {mine.map((o) => {
                 const info = cards[o.cardId]
-                const p = priceOf(info, o.variant)
+                const v = ownedValue(o, info)
                 const featured = state.featured[slotKey] === o.uid
                 return (
                   <li key={o.uid} className={featured ? 'featured' : ''}>
@@ -219,10 +224,24 @@ export default function PokemonPanel({ slotKey, onClose, onNavigate }: Props) {
                           </div>
                         </div>
                       )}
+                      {readOnly ? (
+                        (o.grade || (o.condition ?? 'NM') !== 'NM') && (
+                          <span className="badges">
+                            {o.condition && o.condition !== 'NM' && <span className="badge">{o.condition}</span>}
+                            {o.grade && (
+                              <span className="badge graded">
+                                {o.grade.company} {o.grade.score}
+                              </span>
+                            )}
+                          </span>
+                        )
+                      ) : (
+                        <CardDetails owned={o} />
+                      )}
                     </div>
                     <div className="mine-side">
                       <span className="money">
-                        {p ? `${p.approx ? '≈ ' : ''}${fmtUsd(p.usd * o.qty)}` : t('panel.noPrice')}
+                        {v ? `${v.approx ? '≈ ' : ''}${fmtMoney(v.unit * o.qty)}` : t('panel.noPrice')}
                       </span>
                       {!readOnly && mine.length > 1 && (
                         <button
@@ -281,6 +300,7 @@ export default function PokemonPanel({ slotKey, onClose, onNavigate }: Props) {
               const info = cards[c.id]
               const p = priceOf(info)
               const ownedQty = mine.filter((o) => o.cardId === c.id).reduce((n, o) => n + o.qty, 0)
+              const wished = state.wishlist.some((w) => w.cardId === c.id)
               return (
                 <li key={c.id} className={ownedQty ? 'owned' : ''}>
                   <button
@@ -302,13 +322,35 @@ export default function PokemonPanel({ slotKey, onClose, onNavigate }: Props) {
                     {info?.rarity && <span className="rarity">{info.rarity}</span>}
                   </div>
                   <div className="card-foot">
-                    <span className="money">{info ? (p ? `${p.approx ? '≈ ' : ''}${fmtUsd(p.usd)}` : '—') : '…'}</span>
+                    <span className="money">
+                      {info ? (p ? `${p.approx ? '≈ ' : ''}${fmtMoney(p.usd)}` : '—') : '…'}
+                    </span>
                     {readOnly ? (
-                      ownedQty > 0 && <span className="owned-tag">{t('panel.inCollection', { n: ownedQty })}</span>
+                      <>
+                        {ownedQty > 0 && <span className="owned-tag">{t('panel.inCollection', { n: ownedQty })}</span>}
+                        {wished && (
+                          <span className="wish-tag" title={t('wish.theirs')}>
+                            ♥
+                          </span>
+                        )}
+                      </>
                     ) : (
-                      <button className={ownedQty ? 'small owned-btn' : 'small'} onClick={() => add(c)}>
-                        {ownedQty ? t('panel.owned', { n: ownedQty }) : t('panel.add')}
-                      </button>
+                      <span className="card-actions">
+                        {!ownedQty && (
+                          <button
+                            className={wished ? 'wish-btn on' : 'wish-btn'}
+                            onClick={() => toggleWish(c)}
+                            aria-pressed={wished}
+                            aria-label={wished ? t('wish.remove') : t('wish.add')}
+                            title={wished ? t('wish.on') : t('wish.add')}
+                          >
+                            {wished ? '♥' : '♡'}
+                          </button>
+                        )}
+                        <button className={ownedQty ? 'small owned-btn' : 'small'} onClick={() => add(c)}>
+                          {ownedQty ? t('panel.owned', { n: ownedQty }) : t('panel.add')}
+                        </button>
+                      </span>
                     )}
                   </div>
                 </li>
