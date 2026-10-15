@@ -1,0 +1,6 @@
+{
+  "rewrites": [
+    { "source": "/ptk/:path*", "destination": "https://pokedextracker.com/api/:path*" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}
