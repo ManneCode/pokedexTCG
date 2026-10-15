@@ -18,7 +18,9 @@ type Capture = { captured: boolean; pokemon: { national_id: number; form: string
 
 /** Casillas marcadas en una Pokédex de Pokédex Tracker ("25", "52-alola"…). */
 export async function getTrackerSlots(username: string, slug: string): Promise<string[]> {
-  const res = await fetch(`${API}/users/${encodeURIComponent(username.trim())}/dexes/${encodeURIComponent(slug)}/captures`)
+  const res = await fetch(
+    `${API}/users/${encodeURIComponent(username.trim())}/dexes/${encodeURIComponent(slug)}/captures`,
+  )
   if (!res.ok) throw new Error(`Pokédex Tracker respondió ${res.status}.`)
   const captures: Capture[] = await res.json()
   return captures

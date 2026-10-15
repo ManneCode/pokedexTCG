@@ -133,7 +133,9 @@ function toCardInfo(raw: RawCard): CardInfo {
   }
   const cm = raw.pricing?.cardmarket
   const num = (v: unknown) => (typeof v === 'number' && v > 0 ? v : undefined)
-  const eur = cm ? { normal: num(cm.avg) ?? num(cm.trend), holo: num(cm['avg-holo']) ?? num(cm['trend-holo']) } : undefined
+  const eur = cm
+    ? { normal: num(cm.avg) ?? num(cm.trend), holo: num(cm['avg-holo']) ?? num(cm['trend-holo']) }
+    : undefined
   const variants = Object.keys(usd).length
     ? Object.keys(usd)
     : Object.entries(raw.variants ?? { normal: true })

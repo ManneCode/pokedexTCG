@@ -29,10 +29,11 @@ export function CardsProvider({ children }: { children: ReactNode }) {
 
   const ensure = useCallback<Ctx['ensure']>(
     async (ids, opts) => {
-      if (!opts?.force) for (const id of ids) {
-        const c = getCachedCard(id)
-        if (c) push(c)
-      }
+      if (!opts?.force)
+        for (const id of ids) {
+          const c = getCachedCard(id)
+          if (c) push(c)
+        }
       await getCards(ids, push, opts)
     },
     [push],

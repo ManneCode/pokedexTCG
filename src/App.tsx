@@ -11,6 +11,7 @@ import PokemonPanel from './components/PokemonPanel'
 import LoginDialog from './components/LoginDialog'
 import TrackerImport from './components/TrackerImport'
 import Dialog from './components/Dialog'
+import Footer from './components/Footer'
 
 type Tab = 'dex' | 'collection'
 
@@ -259,6 +260,7 @@ export default function App({ mode }: { mode: AppMode }) {
       )}
 
       <main>{tab === 'dex' ? <DexView onOpen={setOpenSlot} /> : <CollectionView onOpen={setOpenSlot} />}</main>
+      <Footer />
 
       {openSlot !== null && (
         <PokemonPanel slotKey={openSlot} onClose={() => setOpenSlot(null)} onNavigate={setOpenSlot} />

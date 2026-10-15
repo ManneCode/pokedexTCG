@@ -1,7 +1,15 @@
 import { useEffect, type ReactNode } from 'react'
 
 /** Ventana modal sencilla: se cierra con Escape o al tocar fuera. */
-export default function Dialog({ title, onClose, children }: { title: string; onClose: () => void; children: ReactNode }) {
+export default function Dialog({
+  title,
+  onClose,
+  children,
+}: {
+  title: string
+  onClose: () => void
+  children: ReactNode
+}) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
     window.addEventListener('keydown', onKey)

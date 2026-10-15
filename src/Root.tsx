@@ -12,10 +12,18 @@ import {
   type PublicCollection,
 } from './lib/supabase'
 import App, { type SaveStatus } from './App'
+import NewPasswordDialog from './components/NewPasswordDialog'
+import Footer from './components/Footer'
 
 export default function Root() {
+  const { recovering } = useAuth()
   const match = window.location.pathname.match(/^\/u\/([^/]+)\/?$/)
-  return match ? <PublicPage username={decodeURIComponent(match[1])} /> : <HomePage />
+  return (
+    <>
+      {match ? <PublicPage username={decodeURIComponent(match[1])} /> : <HomePage />}
+      {recovering && <NewPasswordDialog />}
+    </>
+  )
 }
 
 function HomePage() {
@@ -197,6 +205,7 @@ function Splash({ text, home }: { text: string; home?: boolean }) {
     <div className="splash">
       <p>{text}</p>
       {home && <a href="/">Ir a mi Pokédex</a>}
+      <Footer />
     </div>
   )
 }

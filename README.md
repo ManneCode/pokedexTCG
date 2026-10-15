@@ -16,8 +16,12 @@ npm run dev
 
 Abre http://localhost:5173. Sin Supabase configurado la app funciona en modo local: la colección se guarda en el navegador (localStorage) y puedes exportar o cargar un respaldo en JSON desde el menú **Más**.
 
-Con Supabase cada quien inicia sesión (correo o Google), su colección se guarda en la nube y tiene un perfil público en `/u/<usuario>` que se puede compartir. Para configurarlo y publicar en Vercel, sigue [DEPLOY.md](DEPLOY.md).
+Con Supabase cada quien crea su cuenta con correo y contraseña, su colección se guarda en la nube y tiene un perfil público en `/u/<usuario>` que se puede compartir. Para configurarlo y publicar en Vercel, sigue [DEPLOY.md](DEPLOY.md).
 
 **Importar de Pokédex Tracker** (menú **Más**, o en la bienvenida) trae las capturas de cualquier usuario de pokedextracker.com como "sin carta elegida". Pasa por el proxy `/ptk` (en `vite.config.ts` y `vercel.json`) porque esa API no acepta llamadas desde otros dominios.
 
 Para regenerar la lista de especies y formas: `node scripts/build-pokedex.mjs`.
+
+## Autor y donaciones
+
+Hecho por **ManneCode**. El pie de página y los links de donación se configuran en `src/config.ts`: si `DONATION_LINKS` está vacío, el botón "Apóyame" no aparece.

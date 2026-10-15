@@ -407,7 +407,9 @@ select {
   color: var(--ink);
   font-weight: 400;
   overflow: hidden;
-  transition: transform 0.12s ease, box-shadow 0.12s ease;
+  transition:
+    transform 0.12s ease,
+    box-shadow 0.12s ease;
 }
 
 .slot:hover {
@@ -1151,4 +1153,107 @@ a {
 .welcome > .stack {
   flex: 1 1 320px;
   max-width: 460px;
+}
+
+/* ---------- contraseña, pie de página y donaciones ---------- */
+
+/* En columnas, los campos no deben crecer a lo alto (el flex-basis de arriba es para filas). */
+.stack > input,
+.stack input[type='email'],
+.stack input[type='password'] {
+  flex: none;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0.55rem 0.7rem;
+}
+
+.password-field {
+  display: flex;
+  gap: 0.4rem;
+  align-items: stretch;
+}
+
+.password-field input {
+  flex: 1;
+  min-width: 0;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0.55rem 0.7rem;
+}
+
+.auth-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.4rem 1rem;
+}
+
+button.link {
+  background: none;
+  border: 0;
+  padding: 0;
+  color: var(--have);
+  font-weight: 400;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.site-footer {
+  margin-top: 3rem;
+  padding-block: 1.5rem;
+  border-top: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.splash .site-footer {
+  margin-top: 0;
+  max-width: 720px;
+}
+
+.footer-main {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem 1rem;
+}
+
+.footer-main p,
+.legal {
+  margin: 0;
+}
+
+.legal {
+  max-width: 80ch;
+  font-size: 0.78rem;
+}
+
+.donate {
+  background: var(--danger);
+  color: #fff;
+}
+
+.donate-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.donate-list li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.donate-list .button-link {
+  min-width: 160px;
+  justify-content: center;
 }

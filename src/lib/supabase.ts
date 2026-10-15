@@ -12,6 +12,9 @@ export type Profile = { id: string; username: string }
 
 export const USERNAME_RE = /^[a-z0-9_]{3,20}$/
 
+/** Mínimo de Supabase por defecto (Authentication → Providers → Email). */
+export const MIN_PASSWORD = 6
+
 function client() {
   if (!supabase) throw new Error('Supabase no está configurado')
   return supabase
@@ -24,7 +27,11 @@ export async function getProfile(userId: string): Promise<Profile | null> {
 }
 
 export async function createProfile(userId: string, username: string): Promise<Profile> {
-  const { data, error } = await client().from('profiles').insert({ id: userId, username }).select('id, username').single()
+  const { data, error } = await client()
+    .from('profiles')
+    .insert({ id: userId, username })
+    .select('id, username')
+    .single()
   if (error) {
     if (error.code === '23505') throw new Error('Ese nombre de usuario ya está ocupado.')
     throw error
