@@ -294,6 +294,7 @@ const es = {
   'scan.searching': 'Buscando…',
   'scan.again': 'Tomar otra foto',
   'scan.exact': 'Encontramos {n} cartas con ese número. Toca la tuya:',
+  'scan.exactOne': 'Encontramos la carta con ese número:',
   'scan.noExact':
     'No encontramos ese número exacto. Estas son sus cartas más recientes; corrige el número si lo leímos mal.',
   'scan.addAnother': 'Ya la tienes · +1',
@@ -626,6 +627,7 @@ const en: Record<MessageKey, string> = {
   'scan.searching': 'Searching…',
   'scan.again': 'Take another photo',
   'scan.exact': 'We found {n} cards with that number. Tap yours:',
+  'scan.exactOne': 'We found the card with that number:',
   'scan.noExact': "We couldn't find that exact number. Here are its newest cards; fix the number if we misread it.",
   'scan.addAnother': 'You have it · +1',
   'scan.seeAll': 'See all {name} cards',

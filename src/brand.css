@@ -900,16 +900,13 @@ button.link.center {
   overflow: hidden;
   border: 1px solid var(--line);
   /* Vinil del binder: un tono más oscuro que la página. */
-  background:
-    linear-gradient(
-      90deg,
-      transparent calc(50% - 1px),
-      var(--line) calc(50% - 1px),
-      var(--line) calc(50% + 1px),
-      transparent calc(50% + 1px)
-    ),
-    color-mix(in srgb, var(--ink) 8%, var(--bg));
+  background: color-mix(in srgb, var(--ink) 8%, var(--bg));
   box-shadow: var(--shadow);
+}
+
+/* Lomo del binder abierto: solo entre dos páginas lado a lado. */
+.binder-page + .binder-page {
+  border-left: 2px solid var(--line);
 }
 
 .binder-page {

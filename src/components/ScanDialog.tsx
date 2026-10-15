@@ -145,7 +145,13 @@ export default function ScanDialog({ onClose, onOpen }: { onClose: () => void; o
 
       {phase === 'results' && results && (
         <div className="stack">
-          <p className="hint">{results.exact ? t('scan.exact', { n: results.cards.length }) : t('scan.noExact')}</p>
+          <p className="hint">
+            {results.exact
+              ? results.cards.length === 1
+                ? t('scan.exactOne')
+                : t('scan.exact', { n: results.cards.length })
+              : t('scan.noExact')}
+          </p>
           <ul className="scan-results">
             {results.cards.map((card) => {
               const owned = state.owned.some((o) => o.cardId === card.id)
