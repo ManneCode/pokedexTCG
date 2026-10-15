@@ -11,4 +11,4 @@ export type DonationLink = { label: string; url: string; note?: string }
  *           { label: 'PayPal', url: 'https://paypal.me/mannecode' },
  *           { label: 'Mercado Pago', url: 'https://link.mercadopago.com.mx/mannecode' }
  */
-export const DONATION_LINKS: DonationLink[] = []
+export const DONATION_LINKS: DonationLink[] = [{ label: 'Buy Me a Coffee', url: 'https://buymeacoffee.com/mannecode' }]
