@@ -1,43 +1,51 @@
 import { useState } from 'react'
 import { AUTHOR, DONATION_LINKS, FIRST_YEAR } from '../config'
+import { supabase } from '../lib/supabase'
+import { useI18n } from '../i18n'
 import Dialog from './Dialog'
+import FeedbackDialog from './FeedbackDialog'
 
 export default function Footer() {
-  const [showDonate, setShowDonate] = useState(false)
+  const { t } = useI18n()
+  const [open, setOpen] = useState<'donate' | 'feedback' | null>(null)
   const year = new Date().getFullYear()
   const years = year > FIRST_YEAR ? `${FIRST_YEAR}–${year}` : String(FIRST_YEAR)
 
   return (
     <footer className="site-footer">
-      <div className="footer-main">
-        <p>
-          © {years} <strong>{AUTHOR}</strong>. Todos los derechos reservados.
-        </p>
+      <span className="footer-mark" aria-hidden="true" />
+      <p className="footer-credit">
+        {t('footer.madeBy')} <strong>{AUTHOR}</strong>
+      </p>
+      <div className="footer-actions">
+        {supabase && (
+          <button className="ghost small" onClick={() => setOpen('feedback')}>
+            {t('footer.feedback')}
+          </button>
+        )}
         {DONATION_LINKS.length > 0 && (
-          <button className="small donate" onClick={() => setShowDonate(true)}>
-            ♥ Apóyame
+          <button className="small donate" onClick={() => setOpen('donate')}>
+            {t('footer.donate')}
           </button>
         )}
       </div>
+      <p className="hint">{t('footer.rights', { years, author: AUTHOR })}</p>
       <p className="hint legal">
-        Pokémon y los nombres de los personajes son marcas de Nintendo, Creatures Inc. y GAME FREAK inc. Este sitio es
-        un proyecto de fans y no está afiliado ni respaldado por ellos. Datos de cartas y precios:{' '}
+        {t('footer.legal')} {t('footer.cardData')}{' '}
         <a href="https://tcgdex.dev" target="_blank" rel="noreferrer">
           TCGdex
         </a>
-        . Sprites:{' '}
+        . {t('footer.sprites')}{' '}
         <a href="https://pokeapi.co" target="_blank" rel="noreferrer">
           PokéAPI
         </a>
         .
       </p>
 
-      {showDonate && (
-        <Dialog title="Apoya Pokédex TCG" onClose={() => setShowDonate(false)}>
-          <p className="hint">
-            Pokédex TCG es gratis y sin anuncios. Si te sirve y quieres invitarme un café para seguir mejorándola,
-            puedes hacerlo aquí. ¡Gracias!
-          </p>
+      {open === 'feedback' && <FeedbackDialog onClose={() => setOpen(null)} />}
+      {open === 'donate' && (
+        <Dialog title={t('donate.title')} onClose={() => setOpen(null)}>
+          <p className="hint">{t('donate.text')}</p>
           <ul className="donate-list">
             {DONATION_LINKS.map((d) => (
               <li key={d.url}>

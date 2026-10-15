@@ -33,7 +33,7 @@ export async function createProfile(userId: string, username: string): Promise<P
     .select('id, username')
     .single()
   if (error) {
-    if (error.code === '23505') throw new Error('Ese nombre de usuario ya está ocupado.')
+    if (error.code === '23505') throw new Error('error.username_taken')
     throw error
   }
   return data
@@ -60,6 +60,22 @@ export async function saveCollection(userId: string, state: CollectionState) {
 
 export async function setCollectionPublic(userId: string, isPublic: boolean) {
   const { error } = await client().from('collections').update({ is_public: isPublic }).eq('user_id', userId)
+  if (error) throw error
+}
+
+export type FeedbackKind = 'suggestion' | 'bug' | 'other'
+
+/** Guarda un mensaje del buzón (tabla feedback, ver supabase/002_feedback.sql). */
+export async function sendFeedback(input: { kind: FeedbackKind; message: string; contact?: string }) {
+  const { error } = await client()
+    .from('feedback')
+    .insert({
+      kind: input.kind,
+      message: input.message,
+      contact: input.contact || null,
+      page: window.location.pathname.slice(0, 300),
+      user_agent: navigator.userAgent.slice(0, 400),
+    })
   if (error) throw error
 }
 

@@ -5,7 +5,7 @@ La página se publica en **Vercel** y guarda las cuentas y colecciones en **Supa
 ## 1. Supabase (base de datos y login)
 
 1. Crea una cuenta en https://supabase.com y un proyecto nuevo (región: la más cercana, p. ej. `East US`). Guarda la contraseña de la base de datos en un lugar seguro.
-2. Ve a **SQL Editor → New query**, pega el contenido de [`supabase/schema.sql`](supabase/schema.sql) y dale **Run**.
+2. Ve a **SQL Editor → New query**, pega el contenido de [`supabase/schema.sql`](supabase/schema.sql) y dale **Run**. Repite con [`supabase/002_feedback.sql`](supabase/002_feedback.sql) (el buzón de sugerencias).
 3. Ve a **Project Settings → API** y copia:
    - **Project URL** → `VITE_SUPABASE_URL`
    - **anon public key** → `VITE_SUPABASE_ANON_KEY`
@@ -32,7 +32,7 @@ Sube el proyecto a un repositorio (puede ser privado). `.env.local` no se sube p
 2. Vercel detecta Vite solo. En **Environment Variables** agrega `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY` con los valores del paso 1.
 3. Dale **Deploy**. Te da una dirección como `https://pokedex-tcg.vercel.app`. Desde ahí, cada push a `main` se publica solo.
 
-`vercel.json` ya incluye dos cosas: que los links `/u/usuario` abran la app y el proxy `/ptk` para importar de Pokédex Tracker.
+`vercel.json` ya hace que los links `/u/usuario` abran la app.
 
 ## 4. Conecta Supabase con tu dominio
 
@@ -48,3 +48,7 @@ Sin esto, los links de confirmación y de recuperar contraseña te regresarían 
 - Entra a tu página, **Iniciar sesión → Crea una**, y elige tu usuario. Lo que tenías en ese navegador se sube a tu cuenta.
 - **Compartir** te da el link `https://…/u/tu-usuario`. Tus amigos lo ven sin cuenta y, si quieren la suya, le dan **Arma la tuya**.
 - En **Compartir** puedes hacer tu colección privada.
+
+## Buzón de sugerencias
+
+Los mensajes del botón **Sugerencias y bugs** se guardan en la tabla `feedback`. Léelos en **Table Editor → feedback**. Desde la página nadie puede leerlos, solo enviarlos.

@@ -5,11 +5,12 @@ import { useAuth } from './lib/auth'
 import type { Profile } from './lib/supabase'
 import { fmtUsd, priceOf } from './lib/tcgdex'
 import { TOTAL_SLOTS, isExtra, slotByKey } from './lib/pokedex'
+import { useI18n, type MessageKey } from './i18n'
 import DexView from './components/DexView'
 import CollectionView from './components/CollectionView'
 import PokemonPanel from './components/PokemonPanel'
 import LoginDialog from './components/LoginDialog'
-import TrackerImport from './components/TrackerImport'
+import CardFan from './components/CardFan'
 import Dialog from './components/Dialog'
 import Footer from './components/Footer'
 
@@ -29,22 +30,23 @@ export type AppMode =
     }
   | { kind: 'public'; profile: Profile; updatedAt: string; isMine: boolean }
 
-const SAVE_LABELS: Record<SaveStatus, string> = {
-  saved: 'Guardado',
-  pending: 'Cambios sin guardar',
-  saving: 'Guardando…',
-  error: 'No se pudo guardar',
+const SAVE_LABELS: Record<SaveStatus, MessageKey> = {
+  saved: 'save.saved',
+  pending: 'save.pending',
+  saving: 'save.saving',
+  error: 'save.error',
 }
 
 export default function App({ mode }: { mode: AppMode }) {
   const { state, dispatch, readOnly } = useCollection()
   const { cards, ensure } = useCards()
   const { auth, signOut } = useAuth()
+  const { t, lang, setLang, locale } = useI18n()
   const [tab, setTab] = useState<Tab>('dex')
   const [openSlot, setOpenSlot] = useState<string | null>(null)
   const [refreshing, setRefreshing] = useState(false)
   const [notice, setNotice] = useState<string | null>(null)
-  const [dialog, setDialog] = useState<'login' | 'tracker' | 'share' | null>(null)
+  const [dialog, setDialog] = useState<'login' | 'signup' | 'share' | null>(null)
   const fileInput = useRef<HTMLInputElement>(null)
 
   const ownedIds = useMemo(() => [...new Set(state.owned.map((o) => o.cardId))], [state.owned])
@@ -86,7 +88,7 @@ export default function App({ mode }: { mode: AppMode }) {
     setRefreshing(true)
     await ensure(ownedIds, { force: true })
     setRefreshing(false)
-    setNotice(`Precios actualizados (${ownedIds.length} cartas).`)
+    setNotice(t('notice.pricesUpdated', { n: ownedIds.length }))
   }
 
   function exportBackup() {
@@ -103,13 +105,15 @@ export default function App({ mode }: { mode: AppMode }) {
       const data = JSON.parse(await file.text()) as CollectionState
       if (!Array.isArray(data.owned) || !Array.isArray(data.marked)) throw new Error()
       dispatch({ type: 'replace', state: data })
-      setNotice(`Respaldo cargado: ${data.owned.length} cartas.`)
+      setNotice(t('notice.backupLoaded', { n: data.owned.length }))
     } catch {
-      setNotice('Ese archivo no es un respaldo de esta app.')
+      setNotice(t('notice.backupInvalid'))
     }
   }
 
-  const pct = (n: number) => `${((n / TOTAL_SLOTS) * 100).toFixed(1)}%`
+  const pctNum = (n: number) => (n / TOTAL_SLOTS) * 100
+  const pct = (n: number) =>
+    `${pctNum(n).toLocaleString(locale, { maximumFractionDigits: 1, minimumFractionDigits: 1 })}%`
   const shareUrl = mode.kind === 'cloud' ? `${window.location.origin}/u/${mode.profile.username}` : ''
   const canLogin = auth.status !== 'disabled'
 
@@ -118,55 +122,63 @@ export default function App({ mode }: { mode: AppMode }) {
       <header className="topbar">
         <a className="brand" href="/">
           <span className="brand-mark" aria-hidden="true" />
-          <h1>Pokédex TCG</h1>
+          <span className="brand-name">
+            <h1>Pokédex TCG</h1>
+            <span className="brand-sub">{t('app.brandSub')}</span>
+          </span>
         </a>
-        <nav className="tabs" aria-label="Secciones">
+        <nav className="tabs" aria-label="Pokédex TCG">
           <button className={tab === 'dex' ? 'on' : ''} onClick={() => setTab('dex')}>
-            Pokédex
+            {t('nav.dex')}
           </button>
           <button className={tab === 'collection' ? 'on' : ''} onClick={() => setTab('collection')}>
-            {readOnly ? 'Colección' : 'Mi colección'}
+            {readOnly ? t('nav.collection') : t('nav.myCollection')}
           </button>
         </nav>
         <div className="topbar-actions">
+          <button
+            className="ghost lang-toggle"
+            onClick={() => setLang(lang === 'es' ? 'en' : 'es')}
+            title={t('top.language')}
+            aria-label={t('top.language')}
+          >
+            {lang === 'es' ? 'EN' : 'ES'}
+          </button>
           {mode.kind === 'cloud' && (
             <>
               <button
                 className={`save-status ${mode.saveStatus}`}
                 onClick={mode.saveStatus === 'error' ? mode.onRetrySave : undefined}
-                title={mode.saveStatus === 'error' ? 'Reintentar' : undefined}
+                title={mode.saveStatus === 'error' ? t('save.retry') : undefined}
               >
-                {SAVE_LABELS[mode.saveStatus]}
+                {t(SAVE_LABELS[mode.saveStatus])}
               </button>
-              <button onClick={() => setDialog('share')}>Compartir</button>
+              <button onClick={() => setDialog('share')}>{t('top.share')}</button>
             </>
           )}
           {mode.kind === 'public' ? (
             <a className="button-link" href="/">
-              {mode.isMine ? 'Editar mi Pokédex' : 'Arma la tuya'}
+              {mode.isMine ? t('top.editMine') : t('top.makeYours')}
             </a>
           ) : (
             <details className="menu">
-              <summary className="ghost-button">Más</summary>
+              <summary className="ghost-button">{t('top.more')}</summary>
               <div className="menu-list">
-                <button className="ghost" onClick={() => setDialog('tracker')}>
-                  Importar de Pokédex Tracker
-                </button>
                 <button className="ghost" onClick={exportBackup}>
-                  Exportar respaldo
+                  {t('top.exportBackup')}
                 </button>
                 <button className="ghost" onClick={() => fileInput.current?.click()}>
-                  Cargar respaldo
+                  {t('top.loadBackup')}
                 </button>
                 {mode.kind === 'cloud' && (
                   <button className="ghost" onClick={signOut}>
-                    Salir de @{mode.profile.username}
+                    {t('top.signOut', { user: mode.profile.username })}
                   </button>
                 )}
               </div>
             </details>
           )}
-          {mode.kind === 'local' && canLogin && <button onClick={() => setDialog('login')}>Iniciar sesión</button>}
+          {mode.kind === 'local' && canLogin && <button onClick={() => setDialog('login')}>{t('top.signIn')}</button>}
           <input
             id="backup-file"
             ref={fileInput}
@@ -184,76 +196,99 @@ export default function App({ mode }: { mode: AppMode }) {
 
       {mode.kind === 'public' && (
         <section className="owner-banner">
-          <h2>Pokédex de @{mode.profile.username}</h2>
+          <h2>{t('public.title', { user: mode.profile.username })}</h2>
           <span className="hint">
-            Actualizada el {new Date(mode.updatedAt).toLocaleDateString('es-MX', { dateStyle: 'long' })}
+            {t('public.updated', {
+              date: new Date(mode.updatedAt).toLocaleDateString(locale, { dateStyle: 'long' }),
+            })}
           </span>
         </section>
       )}
 
-      <section className="summary" aria-label="Resumen">
+      <section className="summary" aria-label="Pokédex TCG">
         <div className="stat stat-main">
-          <span className="label">Pokédex con carta</span>
+          <span className="label">{t('stats.dexWithCard')}</span>
           <span className="value">
             {stats.withCard}
             <small> / {TOTAL_SLOTS}</small>
           </span>
           <div className="bar" role="progressbar" aria-valuenow={stats.withCard} aria-valuemax={TOTAL_SLOTS}>
-            <span style={{ width: pct(stats.withCard) }} className="bar-card" />
-            <span style={{ width: pct(stats.marked) }} className="bar-marked" />
+            <span style={{ width: `${pctNum(stats.withCard)}%` }} className="bar-card" />
+            <span style={{ width: `${pctNum(stats.marked)}%` }} className="bar-marked" />
           </div>
           <span className="hint">
-            {pct(stats.withCard)} completo
-            {stats.marked > 0 && <> · {stats.marked} marcados sin carta elegida</>}
+            {t('stats.complete', { pct: pct(stats.withCard) })}
+            {stats.marked > 0 && <> · {t('stats.markedNoCard', { n: stats.marked })}</>}
           </span>
         </div>
         <div className="stat">
-          <span className="label">Cartas</span>
+          <span className="label">{t('stats.cards')}</span>
           <span className="value">{stats.totalCards}</span>
-          <span className="hint">{ownedIds.length} distintas</span>
+          <span className="hint">{t('stats.distinct', { n: ownedIds.length })}</span>
         </div>
         <div className="stat">
-          <span className="label">Valor de la colección</span>
+          <span className="label">{t('stats.value')}</span>
           <span className="value money">
             {stats.approx && '≈ '}
             {fmtUsd(stats.value)}
           </span>
-          <span className="hint">TCGplayer market (USD){stats.unpriced > 0 && ` · ${stats.unpriced} sin precio`}</span>
+          <span className="hint">
+            {t('stats.valueSource')}
+            {stats.unpriced > 0 && ` · ${t('stats.unpriced', { n: stats.unpriced })}`}
+          </span>
         </div>
         <div className="stat stat-action">
           <button onClick={refreshPrices} disabled={refreshing || !ownedIds.length}>
-            {refreshing ? 'Actualizando…' : 'Actualizar precios'}
+            {refreshing ? t('stats.refreshing') : t('stats.refresh')}
           </button>
-          <span className="hint">Fuente: TCGdex</span>
+          <span className="hint">{t('stats.source')}</span>
         </div>
       </section>
 
       {mode.kind === 'local' && canLogin && !isEmptyCollection(state) && (
         <div className="notice">
-          Tu colección solo está guardada en este navegador. Inicia sesión para guardarla en la nube y compartirla.
+          {t('notice.localOnly')}
           <button className="small" onClick={() => setDialog('login')}>
-            Iniciar sesión
+            {t('top.signIn')}
           </button>
         </div>
       )}
 
       {!readOnly && isEmptyCollection(state) && (
-        <section className="welcome">
-          <div>
-            <h2>Empieza con lo que ya tienes</h2>
-            <p>
-              Si usas Pokédex Tracker, trae tus Pokémon marcados. Quedan como "sin carta elegida" hasta que abras cada
-              uno y escojas cuál carta es la tuya. También puedes abrir cualquier Pokémon y marcar sus cartas.
-            </p>
+        <section className="hero">
+          <div className="hero-copy">
+            <p className="eyebrow">{t('hero.eyebrow')}</p>
+            <h2>
+              {t('hero.title1')}
+              <br />
+              <span className="accent-text">{t('hero.title2')}</span>
+            </h2>
+            <ol className="steps">
+              {(['1', '2', '3'] as const).map((n) => (
+                <li key={n}>
+                  <span>
+                    <b>{t(`hero.step${n}a`)}</b> {t(`hero.step${n}b`)}
+                  </span>
+                </li>
+              ))}
+            </ol>
+            <div className="hero-actions">
+              <button onClick={() => setOpenSlot('1')}>{t('hero.start')}</button>
+              {mode.kind === 'local' && canLogin && (
+                <button className="ghost" onClick={() => setDialog('signup')}>
+                  {t('hero.signUp')}
+                </button>
+              )}
+            </div>
           </div>
-          <TrackerImport onDone={setNotice} />
+          <CardFan />
         </section>
       )}
 
       {notice && (
         <div className="notice" role="status">
           {notice}
-          <button className="ghost" onClick={() => setNotice(null)} aria-label="Cerrar aviso">
+          <button className="ghost" onClick={() => setNotice(null)} aria-label={t('notice.close')}>
             ✕
           </button>
         </div>
@@ -266,39 +301,30 @@ export default function App({ mode }: { mode: AppMode }) {
         <PokemonPanel slotKey={openSlot} onClose={() => setOpenSlot(null)} onNavigate={setOpenSlot} />
       )}
 
-      {dialog === 'login' && <LoginDialog onClose={() => setDialog(null)} />}
-      {dialog === 'tracker' && (
-        <Dialog title="Importar de Pokédex Tracker" onClose={() => setDialog(null)}>
-          <p className="hint">Los Pokémon que tengas marcados quedan como "sin carta elegida". No se borra nada.</p>
-          <TrackerImport
-            onDone={(msg) => {
-              setNotice(msg)
-              setDialog(null)
-            }}
-          />
-        </Dialog>
+      {(dialog === 'login' || dialog === 'signup') && (
+        <LoginDialog initialView={dialog === 'signup' ? 'sign-up' : 'sign-in'} onClose={() => setDialog(null)} />
       )}
       {dialog === 'share' && mode.kind === 'cloud' && (
-        <Dialog title="Compartir mi Pokédex" onClose={() => setDialog(null)}>
+        <Dialog title={t('share.title')} onClose={() => setDialog(null)}>
           <div className="share-row">
             <input id="share-url" readOnly value={shareUrl} onFocus={(e) => e.target.select()} />
             <button
               onClick={() =>
                 navigator.clipboard.writeText(shareUrl).then(
-                  () => setNotice('Link copiado.'),
+                  () => setNotice(t('notice.linkCopied')),
                   () => (document.getElementById('share-url') as HTMLInputElement | null)?.select(),
                 )
               }
             >
-              Copiar
+              {t('share.copy')}
             </button>
           </div>
           <label className="toggle">
             <input id="share-public" type="checkbox" checked={mode.isPublic} onChange={mode.onTogglePublic} />
-            Cualquiera con el link puede ver mi colección
+            {t('share.public')}
           </label>
-          {!mode.isPublic && <p className="hint">Tu colección es privada: el link mostrará que es privada.</p>}
-          <a href={shareUrl}>Ver cómo la ven los demás</a>
+          {!mode.isPublic && <p className="hint">{t('share.privateHint')}</p>}
+          <a href={shareUrl}>{t('share.preview')}</a>
         </Dialog>
       )}
     </div>

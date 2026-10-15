@@ -29,17 +29,19 @@ const AuthContext = createContext<Ctx | null>(null)
 /** Los links de los correos regresan a la página principal. */
 const redirectTo = () => `${window.location.origin}/`
 
-/** Mensajes de Supabase en español para los errores más comunes. */
+/** Códigos de error de Supabase que tienen texto traducido (llaves error.* en src/i18n). */
+const KNOWN_ERRORS = new Set([
+  'invalid_credentials',
+  'email_not_confirmed',
+  'user_already_exists',
+  'weak_password',
+  'over_email_send_rate_limit',
+  'over_request_rate_limit',
+])
+
+/** El mensaje es una llave de traducción cuando la conocemos; si no, el texto original de Supabase. */
 function friendly(error: AuthError): Error {
-  const messages: Record<string, string> = {
-    invalid_credentials: 'Correo o contraseña incorrectos.',
-    email_not_confirmed: 'Primero confirma tu correo con el link que te mandamos.',
-    user_already_exists: 'Ya hay una cuenta con ese correo. Inicia sesión.',
-    weak_password: 'La contraseña es muy débil. Usa al menos 6 caracteres.',
-    over_email_send_rate_limit: 'Se mandaron demasiados correos. Espera unos minutos e inténtalo de nuevo.',
-    over_request_rate_limit: 'Demasiados intentos. Espera unos minutos.',
-  }
-  return new Error((error.code && messages[error.code]) || error.message)
+  return new Error(error.code && KNOWN_ERRORS.has(error.code) ? `error.${error.code}` : error.message)
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -52,7 +54,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const profile = await getProfile(session.user.id)
       setAuth(profile ? { status: 'ready', session, profile } : { status: 'needs-profile', session })
     } catch (e) {
-      setAuth({ status: 'error', message: e instanceof Error ? e.message : 'No se pudo cargar tu perfil.' })
+      setAuth({ status: 'error', message: e instanceof Error ? e.message : 'error.profile' })
     }
   }, [])
 
@@ -82,8 +84,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       })
       if (error) throw friendly(error)
       // Con un correo ya registrado Supabase no da error pero regresa un usuario sin identidades.
-      if (data.user && data.user.identities?.length === 0)
-        throw new Error('Ya hay una cuenta con ese correo. Inicia sesión.')
+      if (data.user && data.user.identities?.length === 0) throw new Error('error.user_already_exists')
       return { needsConfirmation: !data.session }
     },
     async sendPasswordReset(email) {

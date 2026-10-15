@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react'
 import { useCollection } from '../lib/store'
 import { useCards } from '../lib/cards'
-import { cardImage, fmtUsd, priceOf, variantLabel } from '../lib/tcgdex'
+import { cardImage, fmtUsd, priceOf } from '../lib/tcgdex'
+import { useI18n } from '../i18n'
 import { SLOTS, dexNo, slotByKey } from '../lib/pokedex'
 
 type Sort = 'value' | 'dex' | 'recent'
@@ -11,6 +12,7 @@ const slotOrder = (key?: string) => (key ? SLOTS.findIndex((s) => s.key === key)
 export default function CollectionView({ onOpen }: { onOpen: (slot: string) => void }) {
   const { state } = useCollection()
   const { cards } = useCards()
+  const { t, slotName, variantLabel } = useI18n()
   const [sort, setSort] = useState<Sort>('value')
 
   const rows = useMemo(() => {
@@ -31,8 +33,8 @@ export default function CollectionView({ onOpen }: { onOpen: (slot: string) => v
   if (!rows.length) {
     return (
       <div className="empty">
-        <h2>Todavía no tienes cartas registradas</h2>
-        <p>Abre un Pokémon en la Pokédex y toca "La tengo" en la carta que tienes.</p>
+        <h2>{t('col.emptyTitle')}</h2>
+        <p>{t('col.emptyText')}</p>
       </div>
     )
   }
@@ -40,11 +42,11 @@ export default function CollectionView({ onOpen }: { onOpen: (slot: string) => v
   return (
     <div className="collection">
       <div className="toolbar">
-        <label htmlFor="collection-sort">Ordenar por</label>
+        <label htmlFor="collection-sort">{t('col.sortBy')}</label>
         <select id="collection-sort" value={sort} onChange={(e) => setSort(e.target.value as Sort)}>
-          <option value="value">Valor</option>
-          <option value="dex">Número de Pokédex</option>
-          <option value="recent">Agregadas recientemente</option>
+          <option value="value">{t('col.sortValue')}</option>
+          <option value="dex">{t('col.sortDex')}</option>
+          <option value="recent">{t('col.sortRecent')}</option>
         </select>
       </div>
       <div className="table-wrap">
@@ -52,12 +54,12 @@ export default function CollectionView({ onOpen }: { onOpen: (slot: string) => v
           <thead>
             <tr>
               <th />
-              <th>Carta</th>
-              <th>Pokémon</th>
-              <th>Variante</th>
-              <th className="num">Cant.</th>
-              <th className="num">Precio</th>
-              <th className="num">Subtotal</th>
+              <th>{t('col.card')}</th>
+              <th>{t('col.pokemon')}</th>
+              <th>{t('col.variant')}</th>
+              <th className="num">{t('col.qty')}</th>
+              <th className="num">{t('col.price')}</th>
+              <th className="num">{t('col.subtotal')}</th>
             </tr>
           </thead>
           <tbody>
@@ -73,7 +75,7 @@ export default function CollectionView({ onOpen }: { onOpen: (slot: string) => v
                 <td>
                   {o.slots.map((k) => (
                     <span key={k} className="hint">
-                      {dexNo(slotByKey(k)?.dex ?? 0)} {slotByKey(k)?.es}
+                      {dexNo(slotByKey(k)?.dex ?? 0)} {slotByKey(k) && slotName(slotByKey(k)!)}
                     </span>
                   ))}
                 </td>
@@ -86,7 +88,7 @@ export default function CollectionView({ onOpen }: { onOpen: (slot: string) => v
           </tbody>
           <tfoot>
             <tr>
-              <td colSpan={6}>Total</td>
+              <td colSpan={6}>{t('col.total')}</td>
               <td className="num money">{fmtUsd(total)}</td>
             </tr>
           </tfoot>

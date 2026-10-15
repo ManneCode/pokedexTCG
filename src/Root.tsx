@@ -12,6 +12,7 @@ import {
   type PublicCollection,
 } from './lib/supabase'
 import App, { type SaveStatus } from './App'
+import { useI18n } from './i18n'
 import NewPasswordDialog from './components/NewPasswordDialog'
 import Footer from './components/Footer'
 
@@ -37,7 +38,7 @@ function HomePage() {
         </CollectionProvider>
       )
     case 'loading':
-      return <Splash text="Cargando…" />
+      return <Splash text="splash.loading" />
     case 'error':
       return <Splash text={auth.message} />
     case 'needs-profile':
@@ -68,7 +69,7 @@ function CloudDex({ profile }: { profile: Profile }) {
         await saveCollection(profile.id, local)
         setInitial(local)
       })
-      .catch((e) => setError(e instanceof Error ? e.message : 'No se pudo cargar tu colección.'))
+      .catch((e) => setError(e instanceof Error ? e.message : 'error.collection'))
   }, [profile.id])
 
   const flush = useCallback(async () => {
@@ -115,7 +116,7 @@ function CloudDex({ profile }: { profile: Profile }) {
   }
 
   if (error) return <Splash text={error} />
-  if (!initial) return <Splash text="Cargando tu colección…" />
+  if (!initial) return <Splash text="splash.loadingCollection" />
   return (
     <CollectionProvider initial={initial} onChange={onChange}>
       <App mode={{ kind: 'cloud', profile, isPublic, onTogglePublic: togglePublic, saveStatus, onRetrySave: flush }} />
@@ -125,19 +126,20 @@ function CloudDex({ profile }: { profile: Profile }) {
 
 function PublicPage({ username }: { username: string }) {
   const { auth } = useAuth()
+  const { t } = useI18n()
   const [result, setResult] = useState<PublicCollection | { status: 'error'; message: string } | null>(null)
 
   useEffect(() => {
     if (auth.status === 'disabled') return
     loadPublicCollection(username).then(setResult, (e) =>
-      setResult({ status: 'error', message: e instanceof Error ? e.message : 'No se pudo cargar.' }),
+      setResult({ status: 'error', message: e instanceof Error ? e.message : 'error.load' }),
     )
   }, [username, auth.status])
 
-  if (auth.status === 'disabled') return <Splash text="Los perfiles públicos necesitan Supabase configurado." home />
-  if (!result) return <Splash text={`Cargando la Pokédex de @${username}…`} />
-  if (result.status === 'not-found') return <Splash text={`No existe el usuario @${username}.`} home />
-  if (result.status === 'private') return <Splash text={`La colección de @${username} es privada.`} home />
+  if (auth.status === 'disabled') return <Splash text="splash.needsSupabase" home />
+  if (!result) return <Splash text={t('splash.loadingPublic', { user: username })} />
+  if (result.status === 'not-found') return <Splash text={t('splash.notFound', { user: username })} home />
+  if (result.status === 'private') return <Splash text={t('splash.private', { user: username })} home />
   if (result.status === 'error') return <Splash text={result.message} home />
   const isMine = auth.status === 'ready' && auth.profile.id === result.profile.id
   return (
@@ -149,6 +151,7 @@ function PublicPage({ username }: { username: string }) {
 
 function UsernameSetup() {
   const { chooseUsername, signOut } = useAuth()
+  const { t, tx } = useI18n()
   const [username, setUsername] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
@@ -162,7 +165,7 @@ function UsernameSetup() {
     try {
       await chooseUsername(username)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'No se pudo guardar.')
+      setError(err instanceof Error ? err.message : 'error.generic')
       setBusy(false)
     }
   }
@@ -170,10 +173,10 @@ function UsernameSetup() {
   return (
     <div className="splash">
       <form className="setup stack" onSubmit={submit}>
-        <h1>Elige tu nombre de usuario</h1>
-        <p className="hint">Así se verá el link que compartas con tus amigos.</p>
+        <h1>{t('setup.title')}</h1>
+        <p className="hint">{t('setup.lead')}</p>
         <label htmlFor="setup-username" className="sr-only">
-          Nombre de usuario
+          {t('setup.label')}
         </label>
         <div className="username-field">
           <span>{window.location.host}/u/</span>
@@ -187,13 +190,13 @@ function UsernameSetup() {
             placeholder="ash_ketchum"
           />
         </div>
-        <span className="hint">3 a 20 caracteres: letras minúsculas, números y guion bajo.</span>
+        <span className="hint">{t('setup.rules')}</span>
         <button type="submit" disabled={!valid || busy}>
-          {busy ? 'Guardando…' : 'Continuar'}
+          {busy ? t('auth.saving') : t('setup.continue')}
         </button>
-        {error && <p className="error">{error}</p>}
+        {error && <p className="error">{tx(error)}</p>}
         <button type="button" className="ghost" onClick={signOut}>
-          Salir
+          {t('setup.signOut')}
         </button>
       </form>
     </div>
@@ -201,10 +204,11 @@ function UsernameSetup() {
 }
 
 function Splash({ text, home }: { text: string; home?: boolean }) {
+  const { t, tx } = useI18n()
   return (
     <div className="splash">
-      <p>{text}</p>
-      {home && <a href="/">Ir a mi Pokédex</a>}
+      <p>{tx(text)}</p>
+      {home && <a href="/">{t('splash.home')}</a>}
       <Footer />
     </div>
   )

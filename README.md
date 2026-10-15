@@ -18,9 +18,12 @@ Abre http://localhost:5173. Sin Supabase configurado la app funciona en modo loc
 
 Con Supabase cada quien crea su cuenta con correo y contraseña, su colección se guarda en la nube y tiene un perfil público en `/u/<usuario>` que se puede compartir. Para configurarlo y publicar en Vercel, sigue [DEPLOY.md](DEPLOY.md).
 
-**Importar de Pokédex Tracker** (menú **Más**, o en la bienvenida) trae las capturas de cualquier usuario de pokedextracker.com como "sin carta elegida". Pasa por el proxy `/ptk` (en `vite.config.ts` y `vercel.json`) porque esa API no acepta llamadas desde otros dominios.
 
 Para regenerar la lista de especies y formas: `node scripts/build-pokedex.mjs`.
+
+## Idiomas
+
+La interfaz está en español e inglés (botón ES/EN arriba). Los textos están en `src/i18n/messages.ts`. Los nombres de Pokémon y formas cambian con el idioma, y los nombres de las cartas siempre vienen en inglés desde TCGdex.
 
 ## Autor y donaciones
 

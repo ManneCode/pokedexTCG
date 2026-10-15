@@ -32,22 +32,6 @@ export type CardInfo = {
   fetchedAt: number
 }
 
-export const VARIANT_LABELS: Record<string, string> = {
-  normal: 'Normal',
-  holofoil: 'Holo',
-  'reverse-holofoil': 'Reverse holo',
-  reverse: 'Reverse holo',
-  holo: 'Holo',
-  firstEdition: '1ª edición',
-  '1st-edition': '1ª edición',
-  '1st-edition-holofoil': '1ª edición holo',
-  '1st-edition-normal': '1ª edición',
-  'unlimited-holofoil': 'Unlimited holo',
-  wPromo: 'Promo W',
-}
-
-export const variantLabel = (v: string) => VARIANT_LABELS[v] ?? v
-
 /** Serie a partir de la URL de imagen: .../en/{serie}/{set}/{num} */
 export const seriesOf = (image?: string) => image?.split('/')[4]
 
@@ -223,5 +207,12 @@ export function defaultVariant(card: CardInfo): string {
   return card.variants[0]
 }
 
+let numberLocale = 'es-MX'
+
+/** Lo fija el proveedor de idioma (src/i18n) para que los precios sigan el idioma elegido. */
+export const setNumberLocale = (locale: string) => {
+  numberLocale = locale
+}
+
 export const fmtUsd = (n: number) =>
-  n.toLocaleString('es-MX', { style: 'currency', currency: 'USD', minimumFractionDigits: 2 })
+  n.toLocaleString(numberLocale, { style: 'currency', currency: 'USD', minimumFractionDigits: 2 })

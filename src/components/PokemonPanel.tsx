@@ -9,11 +9,11 @@ import {
   listCardsForDex,
   priceOf,
   seriesOf,
-  variantLabel,
   type CardBrief,
   type CardInfo,
 } from '../lib/tcgdex'
 import { SLOTS, dexNo, slotByKey, slotCandidates, spriteUrl } from '../lib/pokedex'
+import { useI18n } from '../i18n'
 
 type Sort = 'new' | 'old' | 'price-desc' | 'price-asc'
 
@@ -27,6 +27,9 @@ export default function PokemonPanel({ slotKey, onClose, onNavigate }: Props) {
   const nextSlot = SLOTS[index + 1]?.key
   const { state, dispatch, readOnly } = useCollection()
   const { cards, ensure } = useCards()
+  const { t, lang, slotName, variantLabel } = useI18n()
+  const name = slotName(species)
+  const otherName = lang === 'es' ? species.en : species.es
   const [list, setList] = useState<CardBrief[] | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [seriesOrder, setSeriesOrder] = useState<string[]>([])
@@ -48,7 +51,7 @@ export default function PokemonPanel({ slotKey, onClose, onNavigate }: Props) {
           { signal: ctrl.signal },
         )
       })
-      .catch(() => !ctrl.signal.aborted && setError('No se pudo cargar la lista de cartas. Revisa tu conexión.'))
+      .catch(() => !ctrl.signal.aborted && setError('panel.loadError'))
     getSeriesOrder().then(setSeriesOrder, () => {})
     return () => ctrl.abort()
   }, [dex, slotKey, ensure])
@@ -114,22 +117,22 @@ export default function PokemonPanel({ slotKey, onClose, onNavigate }: Props) {
         className="panel"
         role="dialog"
         aria-modal="true"
-        aria-label={`Cartas de ${species.es}`}
+        aria-label={t('panel.label', { name })}
         onClick={(e) => e.stopPropagation()}
       >
         <header className="panel-head">
           <img src={spriteUrl(species.sprite)} alt="" className="panel-sprite" />
           <div className="panel-title">
             <span className="slot-no">{dexNo(dex)}</span>
-            <h2>{species.es}</h2>
-            {species.en !== species.es && <span className="hint">{species.en}</span>}
+            <h2>{name}</h2>
+            {otherName !== name && <span className="hint">{otherName}</span>}
           </div>
           <div className="panel-nav">
             <button
               className="ghost"
               disabled={!prevSlot}
               onClick={() => prevSlot && onNavigate(prevSlot)}
-              aria-label="Anterior"
+              aria-label={t('panel.prev')}
             >
               ←
             </button>
@@ -137,11 +140,11 @@ export default function PokemonPanel({ slotKey, onClose, onNavigate }: Props) {
               className="ghost"
               disabled={!nextSlot}
               onClick={() => nextSlot && onNavigate(nextSlot)}
-              aria-label="Siguiente"
+              aria-label={t('panel.next')}
             >
               →
             </button>
-            <button className="ghost" onClick={onClose} aria-label="Cerrar">
+            <button className="ghost" onClick={onClose} aria-label={t('panel.close')}>
               ✕
             </button>
           </div>
@@ -149,22 +152,16 @@ export default function PokemonPanel({ slotKey, onClose, onNavigate }: Props) {
 
         <section className="mine">
           <div className="mine-head">
-            <h3>{readOnly ? 'Cartas en la colección' : 'Mis cartas'}</h3>
+            <h3>{readOnly ? t('panel.theirCards') : t('panel.myCards')}</h3>
             {status !== 'card' && !readOnly && (
               <button className="ghost small" onClick={() => dispatch({ type: 'toggleMark', slot: slotKey })}>
-                {status === 'marked' ? 'Quitar marca "lo tengo"' : 'Marcar "lo tengo" sin elegir carta'}
+                {status === 'marked' ? t('panel.unmark') : t('panel.mark')}
               </button>
             )}
           </div>
-          {status === 'marked' && (
-            <p className="hint">
-              {readOnly
-                ? 'Marcado como suyo, sin carta elegida todavía.'
-                : 'Lo marcaste como tuyo. Elige abajo cuál carta es para que cuente en el valor.'}
-            </p>
-          )}
+          {status === 'marked' && <p className="hint">{readOnly ? t('panel.markedTheirs') : t('panel.markedMine')}</p>}
           {status === 'missing' && (
-            <p className="hint">{readOnly ? `Sin carta de ${species.es}.` : `Aún no tienes carta de ${species.es}.`}</p>
+            <p className="hint">{readOnly ? t('panel.missingTheirs', { name }) : t('panel.missingMine', { name })}</p>
           )}
           {mine.length > 0 && (
             <ul className="mine-list">
@@ -196,7 +193,7 @@ export default function PokemonPanel({ slotKey, onClose, onNavigate }: Props) {
                             onChange={(e) =>
                               dispatch({ type: 'update', uid: o.uid, patch: { variant: e.target.value } })
                             }
-                            aria-label="Variante"
+                            aria-label={t('panel.variant')}
                           >
                             {(info?.variants ?? [o.variant]).map((v) => (
                               <option key={v} value={v}>
@@ -208,14 +205,14 @@ export default function PokemonPanel({ slotKey, onClose, onNavigate }: Props) {
                             <button
                               onClick={() => dispatch({ type: 'update', uid: o.uid, patch: { qty: o.qty - 1 } })}
                               disabled={o.qty <= 1}
-                              aria-label="Una menos"
+                              aria-label={t('panel.less')}
                             >
                               −
                             </button>
                             <span>{o.qty}</span>
                             <button
                               onClick={() => dispatch({ type: 'update', uid: o.uid, patch: { qty: o.qty + 1 } })}
-                              aria-label="Una más"
+                              aria-label={t('panel.more')}
                             >
                               +
                             </button>
@@ -225,7 +222,7 @@ export default function PokemonPanel({ slotKey, onClose, onNavigate }: Props) {
                     </div>
                     <div className="mine-side">
                       <span className="money">
-                        {p ? `${p.approx ? '≈ ' : ''}${fmtUsd(p.usd * o.qty)}` : 'sin precio'}
+                        {p ? `${p.approx ? '≈ ' : ''}${fmtUsd(p.usd * o.qty)}` : t('panel.noPrice')}
                       </span>
                       {!readOnly && mine.length > 1 && (
                         <button
@@ -233,12 +230,12 @@ export default function PokemonPanel({ slotKey, onClose, onNavigate }: Props) {
                           disabled={featured}
                           onClick={() => dispatch({ type: 'feature', slot: slotKey, uid: o.uid })}
                         >
-                          {featured ? 'En la Pokédex' : 'Mostrar en Pokédex'}
+                          {featured ? t('panel.featured') : t('panel.feature')}
                         </button>
                       )}
                       {!readOnly && (
                         <button className="ghost small danger" onClick={() => dispatch({ type: 'remove', uid: o.uid })}>
-                          Quitar
+                          {t('panel.remove')}
                         </button>
                       )}
                     </div>
@@ -251,29 +248,34 @@ export default function PokemonPanel({ slotKey, onClose, onNavigate }: Props) {
 
         <section className="catalog">
           <div className="catalog-head">
-            <h3>Todas las cartas {list && <span className="hint">({list.length})</span>}</h3>
+            <h3>
+              {t('panel.allCards')} {list && <span className="hint">({list.length})</span>}
+            </h3>
             <input
               id="set-filter"
               type="search"
-              placeholder="Filtrar por set"
+              placeholder={t('panel.filterSet')}
               value={setQuery}
               onChange={(e) => setSetQuery(e.target.value)}
             />
-            <select id="card-sort" value={sort} onChange={(e) => setSort(e.target.value as Sort)} aria-label="Ordenar">
-              <option value="new">Más nuevas</option>
-              <option value="old">Más viejas</option>
-              <option value="price-desc">Precio: mayor a menor</option>
-              <option value="price-asc">Precio: menor a mayor</option>
+            <select
+              id="card-sort"
+              value={sort}
+              onChange={(e) => setSort(e.target.value as Sort)}
+              aria-label={t('panel.sort')}
+            >
+              <option value="new">{t('panel.sortNew')}</option>
+              <option value="old">{t('panel.sortOld')}</option>
+              <option value="price-desc">{t('panel.sortPriceDesc')}</option>
+              <option value="price-asc">{t('panel.sortPriceAsc')}</option>
             </select>
           </div>
           {list && loaded < list.length && (
-            <p className="hint">
-              Cargando precios {loaded} / {list.length}…
-            </p>
+            <p className="hint">{t('panel.loadingPrices', { n: loaded, total: list.length })}</p>
           )}
-          {error && <p className="error">{error}</p>}
-          {!list && !error && <p className="hint">Buscando cartas de {species.es}…</p>}
-          {list && list.length === 0 && <p className="hint">TCGdex no tiene cartas físicas de {species.es}.</p>}
+          {error && <p className="error">{t('panel.loadError')}</p>}
+          {!list && !error && <p className="hint">{t('panel.searching', { name })}</p>}
+          {list && list.length === 0 && <p className="hint">{t('panel.none', { name })}</p>}
           <ul className="card-grid">
             {sorted.map((c) => {
               const info = cards[c.id]
@@ -284,12 +286,12 @@ export default function PokemonPanel({ slotKey, onClose, onNavigate }: Props) {
                   <button
                     className="card-img"
                     onClick={() => setPreview(info ?? c)}
-                    aria-label={`Ver ${c.name} en grande`}
+                    aria-label={t('panel.zoom', { name: c.name })}
                   >
                     {c.image ? (
                       <img src={cardImage(c.image)} alt="" loading="lazy" />
                     ) : (
-                      <div className="noimg">Sin imagen</div>
+                      <div className="noimg">{t('panel.noImage')}</div>
                     )}
                   </button>
                   <div className="card-info">
@@ -302,10 +304,10 @@ export default function PokemonPanel({ slotKey, onClose, onNavigate }: Props) {
                   <div className="card-foot">
                     <span className="money">{info ? (p ? `${p.approx ? '≈ ' : ''}${fmtUsd(p.usd)}` : '—') : '…'}</span>
                     {readOnly ? (
-                      ownedQty > 0 && <span className="owned-tag">En la colección ×{ownedQty}</span>
+                      ownedQty > 0 && <span className="owned-tag">{t('panel.inCollection', { n: ownedQty })}</span>
                     ) : (
                       <button className={ownedQty ? 'small owned-btn' : 'small'} onClick={() => add(c)}>
-                        {ownedQty ? `Tengo ×${ownedQty} · +1` : 'La tengo'}
+                        {ownedQty ? t('panel.owned', { n: ownedQty }) : t('panel.add')}
                       </button>
                     )}
                   </div>
@@ -320,7 +322,7 @@ export default function PokemonPanel({ slotKey, onClose, onNavigate }: Props) {
             {preview.image ? (
               <img src={cardImage(preview.image, 'high')} alt={preview.name} />
             ) : (
-              <div className="noimg big">Sin imagen</div>
+              <div className="noimg big">{t('panel.noImage')}</div>
             )}
           </div>
         )}

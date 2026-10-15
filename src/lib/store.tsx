@@ -1,5 +1,5 @@
 // Estado de la colección: cartas que tienes, carta destacada por casilla y casillas
-// marcadas sin carta elegida (p. ej. importadas de Pokédex Tracker).
+// marcadas como "lo tengo" sin carta elegida todavía.
 // Una casilla es una especie ("25") o una forma regional ("52-alola").
 import { createContext, useContext, useEffect, useReducer, useRef, type ReactNode } from 'react'
 
