@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react'
 import { slotStatus, useCollection } from '../lib/store'
 import { useCards } from '../lib/cards'
 import {
-  cardImage,
   defaultVariant,
   getSeriesOrder,
   listCardsForDex,
@@ -16,6 +15,7 @@ import { ownedValue } from '../lib/value'
 import CardDetails from './CardDetails'
 import { SLOTS, dexNo, slotByKey, slotCandidates, spriteUrl } from '../lib/pokedex'
 import { useI18n } from '../i18n'
+import CardImage from './CardImage'
 
 type Sort = 'new' | 'old' | 'price-desc' | 'price-asc'
 
@@ -176,11 +176,16 @@ export default function PokemonPanel({ slotKey, onClose, onNavigate }: Props) {
                 const featured = state.featured[slotKey] === o.uid
                 return (
                   <li key={o.uid} className={featured ? 'featured' : ''}>
-                    {info?.image ? (
-                      <img src={cardImage(info.image)} alt="" onClick={() => setPreview(info)} />
-                    ) : (
-                      <div className="noimg" />
-                    )}
+                    <button className="mine-img" onClick={() => info && setPreview(info)} aria-label={info?.name}>
+                      <CardImage
+                        cardId={o.cardId}
+                        localId={info?.localId}
+                        image={info?.image}
+                        name={info?.name ?? o.cardId}
+                        setName={info?.setName}
+                        sprite={species.sprite}
+                      />
+                    </button>
                     <div className="mine-info">
                       <strong>{info?.name ?? o.cardId}</strong>
                       <span className="hint">
@@ -308,11 +313,14 @@ export default function PokemonPanel({ slotKey, onClose, onNavigate }: Props) {
                     onClick={() => setPreview(info ?? c)}
                     aria-label={t('panel.zoom', { name: c.name })}
                   >
-                    {c.image ? (
-                      <img src={cardImage(c.image)} alt="" loading="lazy" />
-                    ) : (
-                      <div className="noimg">{t('panel.noImage')}</div>
-                    )}
+                    <CardImage
+                      cardId={c.id}
+                      localId={c.localId}
+                      image={c.image}
+                      name={c.name}
+                      setName={info?.setName}
+                      sprite={species.sprite}
+                    />
                   </button>
                   <div className="card-info">
                     <strong title={c.name}>{c.name}</strong>
@@ -361,11 +369,18 @@ export default function PokemonPanel({ slotKey, onClose, onNavigate }: Props) {
 
         {preview && (
           <div className="lightbox" onClick={() => setPreview(null)}>
-            {preview.image ? (
-              <img src={cardImage(preview.image, 'high')} alt={preview.name} />
-            ) : (
-              <div className="noimg big">{t('panel.noImage')}</div>
-            )}
+            <CardImage
+              key={preview.id}
+              cardId={preview.id}
+              localId={preview.localId}
+              image={preview.image}
+              name={preview.name}
+              setName={'setName' in preview ? preview.setName : undefined}
+              sprite={species.sprite}
+              quality="high"
+              className="lightbox-card"
+              lazy={false}
+            />
           </div>
         )}
       </aside>

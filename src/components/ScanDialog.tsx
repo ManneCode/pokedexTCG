@@ -1,11 +1,12 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { useCollection } from '../lib/store'
-import { cardImage, defaultVariant, priceOf, type CardInfo } from '../lib/tcgdex'
+import { defaultVariant, priceOf, type CardInfo } from '../lib/tcgdex'
 import { fmtMoney } from '../lib/money'
 import { dexNo, slotCandidates } from '../lib/pokedex'
 import { findCandidates, findSlot, guessFromText, readCardText } from '../lib/scan'
 import { useI18n } from '../i18n'
 import Dialog from './Dialog'
+import CardImage from './CardImage'
 
 type Phase = 'pick' | 'reading' | 'review' | 'searching' | 'results'
 
@@ -159,7 +160,13 @@ export default function ScanDialog({ onClose, onOpen }: { onClose: () => void; o
               const p = priceOf(card)
               return (
                 <li key={card.id}>
-                  {card.image ? <img src={cardImage(card.image)} alt="" /> : <div className="noimg" />}
+                  <CardImage
+                    cardId={card.id}
+                    localId={card.localId}
+                    image={card.image}
+                    name={card.name}
+                    setName={card.setName}
+                  />
                   <div className="card-info">
                     <strong>{card.name}</strong>
                     <span className="hint">

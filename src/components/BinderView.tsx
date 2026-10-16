@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useCollection } from '../lib/store'
 import { useCards } from '../lib/cards'
-import { cardImage } from '../lib/tcgdex'
 import { MAIN_SLOTS, SLOTS, dexNo, spriteUrl } from '../lib/pokedex'
 import { useI18n } from '../i18n'
+import CardImage from './CardImage'
 
 /** Hojas típicas de binder: 4 (2×2), 9 (3×3) o 12 (3×4) bolsas por página. */
 const POCKETS = [4, 9, 12] as const
@@ -149,8 +149,15 @@ export default function BinderView({ onOpen }: { onOpen: (slot: string) => void 
                         onClick={() => onOpen(s.key)}
                         title={`${dexNo(s.dex)} ${slotName(s)}`}
                       >
-                        {card?.image ? (
-                          <img src={cardImage(card.image)} alt={card.name} loading="lazy" />
+                        {card ? (
+                          <CardImage
+                            cardId={card.id}
+                            localId={card.localId}
+                            image={card.image}
+                            name={card.name}
+                            setName={card.setName}
+                            sprite={s.sprite}
+                          />
                         ) : (
                           <>
                             <img className="pocket-sprite" src={spriteUrl(s.sprite)} alt="" loading="lazy" />

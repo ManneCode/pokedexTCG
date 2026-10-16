@@ -1171,3 +1171,139 @@ button.link.center {
   gap: 0.3rem;
   align-items: center;
 }
+
+/* ---------- carta sin imagen oficial ---------- */
+
+.card-ph {
+  container-type: inline-size;
+  position: relative;
+  width: 100%;
+  aspect-ratio: var(--card-ratio);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  padding: 7% 6%;
+  border-radius: 6px;
+  border: 3px solid var(--accent);
+  overflow: hidden;
+  text-align: center;
+  color: #f4f1ff;
+  background:
+    linear-gradient(115deg, transparent 35%, rgb(255 255 255 / 0.18) 48%, transparent 60%),
+    radial-gradient(circle at 50% 42%, rgb(255 255 255 / 0.18), transparent 55%),
+    linear-gradient(160deg, #2a3a8c, #4a2a7a 60%, #6b2a5e);
+}
+
+.card-ph-name {
+  width: 100%;
+  padding: 2px 4px;
+  border-radius: 4px;
+  background: rgb(0 0 0 / 0.25);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(0.6rem, 9cqi, 0.95rem);
+  line-height: 1.15;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.card-ph-sprite {
+  flex: 1;
+  min-height: 0;
+  width: 80%;
+  object-fit: contain;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 4px 8px rgb(0 0 0 / 0.35));
+}
+
+.card-ph-mark {
+  flex: 1;
+  width: 40%;
+  background: center / contain no-repeat
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-10 -10 20 20'%3E%3Cpath fill='white' d='M0-9 2-2 9 0 2 2 0 9-2 2-9 0-2-2Z'/%3E%3C/svg%3E");
+  opacity: 0.85;
+}
+
+.card-ph-set {
+  font-family: var(--font-mono);
+  font-size: clamp(0.5rem, 6.5cqi, 0.75rem);
+  opacity: 0.85;
+  line-height: 1.2;
+}
+
+.card-ph-note {
+  font-size: clamp(0.45rem, 5.5cqi, 0.68rem);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  opacity: 0.6;
+}
+
+/* En miniaturas (tablas, listas) solo queda el sprite. */
+@container (max-width: 90px) {
+  .card-ph-name,
+  .card-ph-set,
+  .card-ph-note {
+    display: none;
+  }
+  .card-ph-sprite {
+    width: 100%;
+  }
+}
+
+.slot .card-ph.slot-card,
+.pocket.filled .card-ph {
+  position: absolute;
+  inset: 0;
+  height: 100%;
+  border-radius: inherit;
+}
+
+td .card-ph,
+td img.row-card {
+  width: 44px;
+  border-width: 2px;
+  padding: 3px;
+}
+
+.mine-img {
+  padding: 0;
+  background: transparent;
+  width: 64px;
+  border-radius: 4px;
+  cursor: zoom-in;
+}
+
+.mine-img img {
+  width: 100%;
+  border-radius: 4px;
+}
+
+.lightbox .card-ph,
+.lightbox .lightbox-card {
+  width: min(420px, 80vw);
+  max-height: 90vh;
+  border-radius: 14px;
+  box-shadow: 0 10px 40px rgb(0 0 0 / 0.5);
+}
+
+.scan-results .card-ph,
+.scan-results img {
+  width: 56px;
+}
+
+/* El sprite de la carta de respaldo no debe heredar los estilos de imagen de carta de cada vista. */
+.card-ph > img.card-ph-sprite {
+  position: static;
+  inset: auto;
+  width: 80%;
+  height: auto;
+  aspect-ratio: auto;
+  object-fit: contain;
+  border-radius: 0;
+  cursor: inherit;
+  flex: 1;
+  min-height: 0;
+}

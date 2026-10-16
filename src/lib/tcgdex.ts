@@ -1,4 +1,6 @@
 // Cliente de TCGdex (https://tcgdex.dev): listado de cartas por Pokémon, detalle y precios.
+import { SPECIES } from './pokedex'
+
 const API = 'https://api.tcgdex.net/v2/en'
 
 /** Euros → dólares, solo para cartas sin precio en TCGplayer. */
@@ -6,10 +8,14 @@ export const EUR_TO_USD = 1.15
 
 /** Series que no son cartas físicas (TCG Pocket es un juego de celular). */
 const EXCLUDED_SERIES = new Set(['tcgp'])
+/** Ids de sets de TCG Pocket (A1, A2b, B2a, P-A…). */
+const POCKET_ID = /^(A\d|B\d|P-A)/
 
 const PRICE_TTL_MS = 24 * 60 * 60 * 1000
 const CACHE_KEY = 'pkt-cards-v2'
-const LIST_KEY = 'pkt-lists-v1'
+const LIST_KEY = 'pkt-lists-v2'
+/** Las listas se renuevan seguido para que aparezcan los sets nuevos. */
+const LIST_TTL_MS = 2 * 24 * 60 * 60 * 1000
 
 export type CardBrief = { id: string; localId: string; name: string; image?: string }
 
@@ -39,6 +45,31 @@ export const seriesOf = (image?: string) => image?.split('/')[4]
 
 export const cardImage = (image: string | undefined, quality: 'low' | 'high' = 'low') =>
   image ? `${image}/${quality}.webp` : undefined
+
+/** Set de pokemontcg.io equivalente a uno de TCGdex (sv03.5 → sv3pt5, sm3.5 → sm35, me01 → me1). */
+function ptcgSetId(setId: string): string {
+  const special: Record<string, string> = { 'swsh12.5': 'swsh12pt5', 'swsh12.5gg': 'swsh12pt5gg', cel25cc: 'cel25c' }
+  if (special[setId]) return special[setId]
+  // Colecciones de McDonald's: "2021swsh" → "mcd21".
+  const mcd = setId.match(/^20(\d\d)(bw|xy|sm|swsh|sv)$/)
+  if (mcd) return `mcd${mcd[1]}`
+  const half = setId.match(/^(sv|me)0?(\d+)\.5(.*)$/)
+  if (half) return `${half[1]}${half[2]}pt5${half[3]}`
+  const numbered = setId.match(/^(sv|me)0?(\d+)(.*)$/)
+  if (numbered) return `${numbered[1]}${numbered[2]}${numbered[3]}`
+  return setId.replace(/\./g, '')
+}
+
+/**
+ * Imagen de respaldo en el banco de pokemontcg.io para cartas que TCGdex no tiene ilustradas.
+ * Los números puramente numéricos van sin ceros ("001" → "1"); los de promos con letras se quedan igual.
+ */
+export function fallbackImage(cardId: string, localId: string, quality: 'low' | 'high' = 'low') {
+  const setId = cardId.slice(0, cardId.length - localId.length - 1)
+  if (!setId) return undefined
+  const number = /^\d+$/.test(localId) ? String(Number(localId)) : localId
+  return `https://images.pokemontcg.io/${ptcgSetId(setId)}/${number}${quality === 'high' ? '_hires' : ''}.png`
+}
 
 // ---------- caché local ----------
 
@@ -83,13 +114,34 @@ export async function getSeriesOrder(): Promise<string[]> {
   return seriesOrder
 }
 
-export async function listCardsForDex(dex: number): Promise<CardBrief[]> {
-  const cached = listCache[dex]
-  if (cached && Date.now() - cached.at < 7 * PRICE_TTL_MS) return cached.cards
-  const res = await fetch(`${API}/cards?dexId=eq:${dex}`)
+/** Busca cartas en TCGdex y quita las de TCG Pocket. */
+async function fetchBriefs(query: string): Promise<CardBrief[]> {
+  const res = await fetch(`${API}/cards?${query}`)
   if (!res.ok) throw new Error(`TCGdex respondió ${res.status}`)
   const all: CardBrief[] = await res.json()
-  const cards = all.filter((c) => !EXCLUDED_SERIES.has(seriesOf(c.image) ?? ''))
+  return all.filter((c) => !EXCLUDED_SERIES.has(seriesOf(c.image) ?? '') && !POCKET_ID.test(c.id))
+}
+
+const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+
+/**
+ * Cartas de un Pokémon. Se buscan por número de Pokédex y también por nombre, porque TCGdex
+ * tarda unas semanas en ponerle el número a las cartas de los sets recién salidos
+ * (p. ej. 30th Celebration). Del resultado por nombre solo se agregan las que no vinieron
+ * por número y cuyo nombre lleva la palabra exacta ("Mew" no trae a "Mewtwo").
+ */
+export async function listCardsForDex(dex: number): Promise<CardBrief[]> {
+  const cached = listCache[dex]
+  if (cached && Date.now() - cached.at < LIST_TTL_MS) return cached.cards
+  const name = SPECIES[dex - 1]?.en
+  const [byDex, byName] = await Promise.all([
+    fetchBriefs(`dexId=eq:${dex}`),
+    name ? fetchBriefs(`name=${encodeURIComponent(name)}`).catch(() => []) : Promise.resolve([]),
+  ])
+  const seen = new Set(byDex.map((c) => c.id))
+  const word = name ? new RegExp(`(^|[^A-Za-z])${escapeRe(name)}($|[^A-Za-z])`, 'i') : null
+  const extra = byName.filter((c) => !seen.has(c.id) && word?.test(c.name))
+  const cards = [...byDex, ...extra]
   listCache[dex] = { at: Date.now(), cards }
   writeJson(LIST_KEY, listCache)
   return cards

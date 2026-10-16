@@ -1,11 +1,11 @@
 import { useMemo, useState } from 'react'
 import { slotStatus, useCollection, type SlotStatus } from '../lib/store'
 import { useCards } from '../lib/cards'
-import { cardImage } from '../lib/tcgdex'
 import { ownedValue } from '../lib/value'
 import { fmtMoney } from '../lib/money'
 import { SECTIONS, SLOTS, dexNo, spriteUrl, type Section, type Slot } from '../lib/pokedex'
 import { useI18n, type MessageKey } from '../i18n'
+import CardImage from './CardImage'
 
 type Filter = 'all' | 'missing' | 'card' | 'marked'
 
@@ -123,12 +123,20 @@ export default function DexView({ onOpen }: { onOpen: (slot: string) => void }) 
                 const card = featured && cards[featured.cardId]
                 const count = state.owned.filter((o) => o.slots.includes(s.key)).reduce((n, o) => n + o.qty, 0)
                 const value = featured ? ownedValue(featured, card) : null
-                const art = showArt && card?.image ? cardImage(card.image) : undefined
+                const art = showArt && card ? card : undefined
                 return (
                   <li key={s.key}>
                     <button className={`slot ${st}${art ? ' has-art' : ''}`} onClick={() => onOpen(s.key)}>
                       {art ? (
-                        <img className="slot-card" src={art} alt="" loading="lazy" />
+                        <CardImage
+                          cardId={art.id}
+                          localId={art.localId}
+                          image={art.image}
+                          name={art.name}
+                          setName={art.setName}
+                          sprite={s.sprite}
+                          className="slot-card"
+                        />
                       ) : (
                         <img className="slot-sprite" src={spriteUrl(s.sprite)} alt="" loading="lazy" />
                       )}

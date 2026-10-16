@@ -1,13 +1,14 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useCollection } from '../lib/store'
 import { useCards } from '../lib/cards'
-import { cardImage, priceOf, type CardInfo } from '../lib/tcgdex'
+import { priceOf, type CardInfo } from '../lib/tcgdex'
 import { fmtMoney } from '../lib/money'
 import { ownedValue, todayKey } from '../lib/value'
 import { collectionCsv, downloadText } from '../lib/export'
 import { useI18n, type MessageKey } from '../i18n'
 import { SLOTS, dexNo, slotByKey } from '../lib/pokedex'
 import ValueHistory from './ValueHistory'
+import CardImage from './CardImage'
 
 type View = 'owned' | 'wishlist' | 'history'
 type Sort = 'value' | 'dex' | 'recent'
@@ -161,7 +162,17 @@ function OwnedTable({ onOpen }: { onOpen: (slot: string) => void }) {
           <tbody>
             {rows.map(({ o, info, unit, approx, total }) => (
               <tr key={o.uid} onClick={() => onOpen(o.slots[0])}>
-                <td>{info?.image ? <img src={cardImage(info.image)} alt="" loading="lazy" /> : null}</td>
+                <td>
+                  <CardImage
+                    cardId={o.cardId}
+                    localId={info?.localId}
+                    image={info?.image}
+                    name={info?.name ?? o.cardId}
+                    setName={info?.setName}
+                    sprite={slotByKey(o.slots[0])?.sprite}
+                    className="row-card"
+                  />
+                </td>
                 <td>
                   <CardCell info={info} cardId={o.cardId} />
                 </td>
@@ -252,7 +263,17 @@ function Wishlist({ onOpen }: { onOpen: (slot: string) => void }) {
           <tbody>
             {rows.map(({ w, info, unit, approx }) => (
               <tr key={w.uid} onClick={() => onOpen(w.slots[0])}>
-                <td>{info?.image ? <img src={cardImage(info.image)} alt="" loading="lazy" /> : null}</td>
+                <td>
+                  <CardImage
+                    cardId={w.cardId}
+                    localId={info?.localId}
+                    image={info?.image}
+                    name={info?.name ?? w.cardId}
+                    setName={info?.setName}
+                    sprite={slotByKey(w.slots[0])?.sprite}
+                    className="row-card"
+                  />
+                </td>
                 <td>
                   <CardCell info={info} cardId={w.cardId} />
                 </td>
